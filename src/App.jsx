@@ -5,6 +5,7 @@ import MRRGauge from './components/MRRGauge.jsx';
 import MonthlyChart from './components/MonthlyChart.jsx';
 import DailyChart from './components/DailyChart.jsx';
 import ChannelGrid from './components/ChannelGrid.jsx';
+import ChannelPieChart from './components/ChannelPieChart.jsx';
 import { useSalesData } from './hooks/useSalesData.js';
 import { useKioskMode } from './hooks/useKioskMode.js';
 import { formatINR } from './data/salesData.js';
@@ -89,12 +90,15 @@ export default function App() {
       </div>
 
       {/* Charts Row */}
-      <div className="flex-none grid grid-cols-5 gap-2" style={{ height: '230px' }}>
+      <div className="flex-none grid grid-cols-6 gap-2" style={{ height: '230px' }}>
         <div className="col-span-3">
           <MonthlyChart monthlyData={monthlyData} />
         </div>
         <div className="col-span-1">
           <DailyChart dailyData={dailyData} dailyTarget={dailyTarget} monthShort={monthShort} />
+        </div>
+        <div className="col-span-1">
+          <ChannelPieChart channelData={channelData} monthShort={monthShort} />
         </div>
         <div className="col-span-1">
           <MRRGauge mrrGoal={currentTarget} currentMRR={currentMTD} />

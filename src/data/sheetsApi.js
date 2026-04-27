@@ -46,6 +46,7 @@ function parseNum(val) {
 
 async function listSheets() {
   if (!API_KEY) throw new Error('VITE_GOOGLE_API_KEY not configured');
+  if (!SPREADSHEET_ID) throw new Error('VITE_SPREADSHEET_ID not configured');
   const res = await fetch(`${BASE}/${SPREADSHEET_ID}?fields=sheets.properties.title&key=${API_KEY}`);
   if (!res.ok) throw new Error(`Sheets API ${res.status}`);
   const data = await res.json();

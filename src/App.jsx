@@ -6,6 +6,7 @@ import MonthlyChart from './components/MonthlyChart.jsx';
 import DailyChart from './components/DailyChart.jsx';
 import ChannelGrid from './components/ChannelGrid.jsx';
 import ChannelPieChart from './components/ChannelPieChart.jsx';
+import VideoCard from './components/VideoCard.jsx';
 import { useSalesData } from './hooks/useSalesData.js';
 import { useKioskMode } from './hooks/useKioskMode.js';
 import { formatINR } from './data/salesData.js';
@@ -87,7 +88,7 @@ export default function App() {
       </div>
 
       {/* Charts Row */}
-      <div className="flex-none grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2">
+      <div className="flex-none grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2">
         <div className="col-span-1 sm:col-span-2 lg:col-span-3 h-[220px] lg:h-[230px]">
           <MonthlyChart monthlyData={monthlyData} />
         </div>
@@ -99,6 +100,9 @@ export default function App() {
         </div>
         <div className="col-span-1 h-[200px] lg:h-[230px]">
           <MRRGauge mrrGoal={currentTarget} currentMRR={currentMTD} />
+        </div>
+        <div className="col-span-1 h-[200px] lg:h-[230px]">
+          <VideoCard />
         </div>
       </div>
 

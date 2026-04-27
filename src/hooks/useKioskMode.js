@@ -2,39 +2,16 @@ import { useEffect, useRef } from 'react';
 
 const BLANK_VIDEO_SRC = 'data:video/mp4;base64,AAAAHGZ0eXBpc29tAAACAGlzb21pc28yYXZjMQAAAAhmcmVlAAAAGm1kYXQAAAITBgX/xgBDAADBAAB//h4FAAhBgAAABAAHAABAAAAIAAAABg==';
 
-// YouTube video played silently in a hidden 1×1px iframe.
-// LG WebOS firmware treats any active YouTube/video playback as "content playing"
-// and definitively suppresses the screensaver — more reliable than all JS tricks.
-const YT_EMBED = 'https://www.youtube.com/embed/x8ACsWl36L8?autoplay=1&loop=1&mute=1&playlist=x8ACsWl36L8&controls=0&rel=0&playsinline=1';
-
 const SIX_HOURS = 6 * 60 * 60 * 1000;
 const NUDGE_MS  = 60 * 1000;
 
 export function useKioskMode() {
   const wakeLockRef = useRef(null);
   const videoRef    = useRef(null);
-  const iframeRef   = useRef(null);
   const audioRef    = useRef(null);
   const rafRef      = useRef(null);
 
-  // ── 1. Hidden YouTube iframe — primary screensaver killer ────────────────
-  // Positioned 1×1px off-screen. TV sees active video playback → no screensaver.
-  function startYouTubeLoop() {
-    if (iframeRef.current) return;
-    const f = document.createElement('iframe');
-    f.src = YT_EMBED;
-    f.allow = 'autoplay; encrypted-media';
-    Object.assign(f.style, {
-      position: 'fixed', top: '-2px', left: '-2px',
-      width: '2px', height: '2px',
-      opacity: '0', pointerEvents: 'none',
-      border: 'none',
-    });
-    document.body.appendChild(f);
-    iframeRef.current = f;
-  }
-
-  // ── 2. Wake Lock API ──────────────────────────────────────────────────────
+  // ── 1. Wake Lock API ──────────────────────────────────────────────────────
   async function requestWakeLock() {
     if (!('wakeLock' in navigator)) return;
     try { wakeLockRef.current = await navigator.wakeLock.request('screen'); } catch {}
@@ -89,7 +66,6 @@ export function useKioskMode() {
   }
 
   useEffect(() => {
-    startYouTubeLoop();   // primary
     requestWakeLock();
     startVideoLoop();
     startSilentAudio();
@@ -123,7 +99,6 @@ export function useKioskMode() {
       document.removeEventListener('keydown', onInteract);
       wakeLockRef.current?.release().catch(() => {});
       videoRef.current?.remove();
-      iframeRef.current?.remove();
       audioRef.current?.close().catch(() => {});
     };
   }, []);

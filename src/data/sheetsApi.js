@@ -107,6 +107,25 @@ function parseSheet(rows, meta) {
     channels.splice(channels.indexOf(meeshob2b), 1);
   }
 
+  // Merge RK World + Clicktech + Amazon SC → Amazon (SC & VC)
+  function isAmazonChannel(name) {
+    const n = name.toLowerCase();
+    return n.includes('rk world') || n.includes('clicktech') || n.includes('amazon sc');
+  }
+  const amazonChannels = channels.filter(c => isAmazonChannel(c.name));
+  if (amazonChannels.length >= 2) {
+    const combined = {
+      name: 'Amazon (SC & VC)',
+      target: amazonChannels.reduce((s, c) => s + c.target, 0),
+      actual: amazonChannels.reduce((s, c) => s + c.actual, 0),
+      pct: 0,
+    };
+    combined.pct = combined.target > 0 ? Math.round((combined.actual / combined.target) * 100) : 0;
+    const firstIdx = channels.indexOf(amazonChannels[0]);
+    channels.splice(firstIdx, 0, combined);
+    amazonChannels.forEach(c => channels.splice(channels.indexOf(c), 1));
+  }
+
   // Monthly target = sum of all channel targets (more robust than reading Total column)
   const monthTarget = channels.reduce((sum, ch) => sum + ch.target, 0);
   const monthActual = parseNum(actualRow[totalIdx]);

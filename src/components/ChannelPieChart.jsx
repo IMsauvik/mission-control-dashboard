@@ -44,7 +44,7 @@ export default function ChannelPieChart({ channelData, monthShort }) {
 
   return (
     <div className="card-glass rounded-xl p-3 h-full flex flex-col">
-      <span className="text-[10px] font-bold tracking-widest uppercase text-[#64748b] mb-1 flex-none">
+      <span className="text-[11px] font-bold tracking-widest uppercase text-[#64748b] mb-1 flex-none">
         {monthShort} Sales Mix
       </span>
 
@@ -80,11 +80,11 @@ export default function ChannelPieChart({ channelData, monthShort }) {
                 className="flex-none rounded-sm"
                 style={{ width: 6, height: 6, background: COLORS[i % COLORS.length] }}
               />
-              <span className="text-[9px] text-[#94a3b8] truncate flex-1 leading-tight">
+              <span className="text-[11px] text-[#94a3b8] truncate flex-1 leading-tight">
                 {s.name}
               </span>
               <span
-                className="text-[9px] font-bold flex-none"
+                className="text-[11px] font-bold flex-none"
                 style={{ color: COLORS[i % COLORS.length] }}
               >
                 {s.pct}%

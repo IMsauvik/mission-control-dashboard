@@ -26,10 +26,10 @@ export default function DailyChart({ dailyData, dailyTarget, monthShort }) {
   return (
     <div className="card-glass rounded-xl p-4 h-full flex flex-col">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-[10px] font-bold tracking-widest uppercase text-[#64748b]">
+        <span className="text-[11px] font-bold tracking-widest uppercase text-[#94a3b8]">
           {monthShort} Daily Sales
         </span>
-        <span className="text-[10px] text-[#64748b]">
+        <span className="text-[11px] text-[#94a3b8]">
           Target: <span className="text-[#f59e0b] font-semibold">{formatINRShort(dailyTarget)}/day</span>
         </span>
       </div>
@@ -46,17 +46,17 @@ export default function DailyChart({ dailyData, dailyTarget, monthShort }) {
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(26,45,69,0.6)" vertical={false} />
             <XAxis
               dataKey="day"
-              tick={{ fill: '#64748b', fontSize: 9 }}
+              tick={{ fill: '#94a3b8', fontSize: 11 }}
               axisLine={false}
               tickLine={false}
               interval={3}
             />
             <YAxis
               tickFormatter={formatINRShort}
-              tick={{ fill: '#64748b', fontSize: 9 }}
+              tick={{ fill: '#94a3b8', fontSize: 11 }}
               axisLine={false}
               tickLine={false}
-              width={42}
+              width={46}
             />
             <Tooltip
               content={(props) => (

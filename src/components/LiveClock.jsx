@@ -24,7 +24,7 @@ export default function LiveClock() {
       <div className="text-white font-bold text-xl tabular-nums tracking-tight">
         {hh}:{mm}:{ss} <span className="text-[#22c55e] text-sm font-semibold">IST</span>
       </div>
-      <div className="text-[#64748b] text-xs font-medium mt-0.5">
+      <div className="text-[#94a3b8] text-[13px] font-medium mt-0.5">
         {day}, {date} {month} {year}
       </div>
     </div>

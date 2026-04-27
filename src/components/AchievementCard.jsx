@@ -58,11 +58,11 @@ export default function AchievementCard({ achievement, daysDone, totalDays, dail
     >
       {/* Top row */}
       <div className="flex items-start justify-between">
-        <span className="text-[10px] font-bold tracking-widest uppercase text-[#64748b]">
+        <span className="text-[11px] font-bold tracking-widest uppercase text-[#64748b]">
           Achievement
         </span>
         <span
-          className="text-[10px] font-bold px-1.5 py-0.5 rounded-md tracking-wide"
+          className="text-[11px] font-bold px-1.5 py-0.5 rounded-md tracking-wide"
           style={{ background: `${accentColor}20`, color: accentColor }}
         >
           {badgeLabel}
@@ -78,7 +78,7 @@ export default function AchievementCard({ achievement, daysDone, totalDays, dail
           <span className="text-xs font-medium text-[#64748b]">
             {daysDone}/{totalDays} days done
           </span>
-          <span className="text-[10px] font-bold" style={{ color: trendColor }}>
+          <span className="text-[11px] font-bold" style={{ color: trendColor }}>
             {trendArrow} {todayDeltaPct.toFixed(1)}% today
           </span>
         </div>

@@ -26,7 +26,7 @@ export default function MRRGauge({ mrrGoal, currentMRR }) {
 
   return (
     <div className="card-glass-green rounded-xl p-4 flex flex-col justify-between h-full">
-      <span className="text-[10px] font-bold tracking-widest uppercase text-[#64748b]">
+      <span className="text-[11px] font-bold tracking-widest uppercase text-[#64748b]">
         Monthly Goal
       </span>
 
@@ -61,19 +61,19 @@ export default function MRRGauge({ mrrGoal, currentMRR }) {
 
         <div className="flex flex-col gap-2 flex-1">
           <div>
-            <div className="text-[10px] text-[#64748b] font-medium uppercase tracking-wider">MTD</div>
+            <div className="text-[11px] text-[#64748b] font-medium uppercase tracking-wider">MTD</div>
             <div className="text-lg font-black text-[#22c55e] leading-tight">
               {formatINR(currentMRR)}
             </div>
           </div>
           <div>
-            <div className="text-[10px] text-[#64748b] font-medium uppercase tracking-wider">Target</div>
+            <div className="text-[11px] text-[#64748b] font-medium uppercase tracking-wider">Target</div>
             <div className="text-lg font-black text-white leading-tight">
               {formatINR(mrrGoal)}
             </div>
           </div>
           <div>
-            <div className="text-[10px] text-[#64748b] font-medium uppercase tracking-wider">Gap</div>
+            <div className="text-[11px] text-[#64748b] font-medium uppercase tracking-wider">Gap</div>
             <div className="text-base font-bold text-[#f59e0b] leading-tight">
               {mrrGoal > currentMRR ? `${formatINR(mrrGoal - currentMRR)} to go` : 'TARGET HIT!'}
             </div>
@@ -82,7 +82,7 @@ export default function MRRGauge({ mrrGoal, currentMRR }) {
       </div>
 
       <div>
-        <div className="flex justify-between text-[10px] text-[#64748b] font-medium mb-1">
+        <div className="flex justify-between text-[11px] text-[#64748b] font-medium mb-1">
           <span>₹0</span>
           <span>{formatINR(mrrGoal / 2)}</span>
           <span>{formatINR(mrrGoal)}</span>

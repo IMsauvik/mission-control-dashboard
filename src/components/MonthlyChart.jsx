@@ -24,17 +24,17 @@ export default function MonthlyChart({ monthlyData }) {
   return (
     <div className="card-glass rounded-xl p-4 h-full flex flex-col">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-[10px] font-bold tracking-widest uppercase text-[#64748b]">
+        <span className="text-[11px] font-bold tracking-widest uppercase text-[#94a3b8]">
           Monthly Revenue Trend
         </span>
-        <div className="flex items-center gap-4 text-[10px]">
+        <div className="flex items-center gap-4 text-[11px]">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-sm bg-[#22c55e]" />
-            <span className="text-[#64748b]">Revenue</span>
+            <span className="text-[#94a3b8]">Revenue</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-1.5 rounded-sm" style={{ background: 'linear-gradient(90deg, #f59e0b, #fcd34d)', opacity: 0.7 }} />
-            <span className="text-[#64748b]">Target</span>
+            <span className="text-[#94a3b8]">Target</span>
           </div>
         </div>
       </div>
@@ -51,13 +51,13 @@ export default function MonthlyChart({ monthlyData }) {
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(26,45,69,0.6)" vertical={false} />
             <XAxis
               dataKey="month"
-              tick={{ fill: '#64748b', fontSize: 11, fontWeight: 600 }}
+              tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 600 }}
               axisLine={false}
               tickLine={false}
             />
             <YAxis
               tickFormatter={formatINRShort}
-              tick={{ fill: '#64748b', fontSize: 10 }}
+              tick={{ fill: '#94a3b8', fontSize: 11 }}
               axisLine={false}
               tickLine={false}
               width={52}

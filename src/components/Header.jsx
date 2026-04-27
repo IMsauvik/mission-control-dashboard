@@ -9,7 +9,7 @@ export default function Header({ currentMonthLabel, daysDone, totalDays }) {
         <img src={logo} alt="Imeco" className="h-8 w-auto" />
         <div className="w-px h-8 bg-[#1a2d45]" />
         <div>
-          <div className="text-[10px] text-[#64748b] font-medium uppercase tracking-widest leading-none">
+          <div className="text-[11px] text-[#94a3b8] font-medium uppercase tracking-widest leading-none">
             from the house of Amwoodo
           </div>
         </div>
@@ -26,7 +26,7 @@ export default function Header({ currentMonthLabel, daysDone, totalDays }) {
             Live Dashboard
           </span>
           <div className="w-px h-3 bg-[#1a2d45]" />
-          <span className="text-[#64748b] text-[10px] font-medium tracking-widest uppercase">
+          <span className="text-[#94a3b8] text-[11px] font-medium tracking-widest uppercase">
             {currentMonthLabel} — Day {daysDone} of {totalDays}
           </span>
         </div>

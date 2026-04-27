@@ -2,35 +2,57 @@ import { useEffect, useRef } from 'react';
 
 const BLANK_VIDEO_SRC = 'data:video/mp4;base64,AAAAHGZ0eXBpc29tAAACAGlzb21pc28yYXZjMQAAAAhmcmVlAAAAGm1kYXQAAAITBgX/xgBDAADBAAB//h4FAAhBgAAABAAHAABAAAAIAAAABg==';
 
+// YouTube video played silently in a hidden 1×1px iframe.
+// LG WebOS firmware treats any active YouTube/video playback as "content playing"
+// and definitively suppresses the screensaver — more reliable than all JS tricks.
+const YT_EMBED = 'https://www.youtube.com/embed/x8ACsWl36L8?autoplay=1&loop=1&mute=1&playlist=x8ACsWl36L8&controls=0&rel=0&playsinline=1';
+
 const SIX_HOURS = 6 * 60 * 60 * 1000;
-const NUDGE_MS  = 60 * 1000; // every 60s — aggressive, well inside 30-min threshold
+const NUDGE_MS  = 60 * 1000;
 
 export function useKioskMode() {
   const wakeLockRef = useRef(null);
   const videoRef    = useRef(null);
+  const iframeRef   = useRef(null);
   const audioRef    = useRef(null);
   const rafRef      = useRef(null);
 
-  // ── 1. Wake Lock API ──────────────────────────────────────────────────────
+  // ── 1. Hidden YouTube iframe — primary screensaver killer ────────────────
+  // Positioned 1×1px off-screen. TV sees active video playback → no screensaver.
+  function startYouTubeLoop() {
+    if (iframeRef.current) return;
+    const f = document.createElement('iframe');
+    f.src = YT_EMBED;
+    f.allow = 'autoplay; encrypted-media';
+    Object.assign(f.style, {
+      position: 'fixed', top: '-2px', left: '-2px',
+      width: '2px', height: '2px',
+      opacity: '0', pointerEvents: 'none',
+      border: 'none',
+    });
+    document.body.appendChild(f);
+    iframeRef.current = f;
+  }
+
+  // ── 2. Wake Lock API ──────────────────────────────────────────────────────
   async function requestWakeLock() {
     if (!('wakeLock' in navigator)) return;
     try { wakeLockRef.current = await navigator.wakeLock.request('screen'); } catch {}
   }
 
-  // ── 2. Invisible looping video ────────────────────────────────────────────
+  // ── 3. Invisible looping video (fallback) ─────────────────────────────────
   function startVideoLoop() {
     if (videoRef.current) return;
     const v = document.createElement('video');
     v.src = BLANK_VIDEO_SRC;
     v.autoplay = true; v.loop = true; v.muted = true; v.playsInline = true;
-    Object.assign(v.style, { position:'fixed', top:'-1px', left:'-1px', width:'1px', height:'1px', opacity:'0', pointerEvents:'none' });
+    Object.assign(v.style, { position: 'fixed', top: '-1px', left: '-1px', width: '1px', height: '1px', opacity: '0', pointerEvents: 'none' });
     document.body.appendChild(v);
     v.play().catch(() => {});
     videoRef.current = v;
   }
 
-  // ── 3. Silent Web Audio — LG WebOS treats "audio playing" as active content
-  //       and suppresses the screensaver, even at zero gain.
+  // ── 4. Silent Web Audio (fallback) ────────────────────────────────────────
   function startSilentAudio() {
     if (audioRef.current) return;
     try {
@@ -38,27 +60,22 @@ export function useKioskMode() {
       const ctx = new AC();
       const buf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
       const src = ctx.createBufferSource();
-      src.buffer = buf;
-      src.loop = true;
+      src.buffer = buf; src.loop = true;
       const gain = ctx.createGain();
-      gain.gain.value = 0.001; // essentially silent but "playing"
-      src.connect(gain);
-      gain.connect(ctx.destination);
+      gain.gain.value = 0.001;
+      src.connect(gain); gain.connect(ctx.destination);
       src.start(0);
       audioRef.current = ctx;
     } catch {}
   }
 
-  // ── 4. requestAnimationFrame loop — keeps GPU/renderer active ────────────
+  // ── 5. requestAnimationFrame loop ────────────────────────────────────────
   function startRafLoop() {
     function tick() { rafRef.current = requestAnimationFrame(tick); }
     rafRef.current = requestAnimationFrame(tick);
   }
 
-  // ── 5. Simulate input events — resets OS-level idle timer ─────────────────
-  // Combines pointer, mouse AND a tiny scroll nudge. The scroll is the most
-  // reliable trigger on LG WebOS because it translates to a physical scroll
-  // signal that the TV firmware counts as user activity.
+  // ── 6. Periodic input nudge — resets OS idle timer ────────────────────────
   function nudgeSystemIdle() {
     const cx = Math.round(window.innerWidth  / 2);
     const cy = Math.round(window.innerHeight / 2);
@@ -67,18 +84,12 @@ export function useKioskMode() {
       document.dispatchEvent(new PointerEvent('pointermove', opts));
       document.dispatchEvent(new MouseEvent('mousemove', opts));
     } catch {}
-    // Micro-scroll trick: scroll 1px down then back — registers as real input
-    try {
-      window.scrollBy(0, 1);
-      window.scrollBy(0, -1);
-    } catch {}
-    // Resume audio context if the browser suspended it (happens after tab hide)
-    try {
-      if (audioRef.current?.state === 'suspended') audioRef.current.resume();
-    } catch {}
+    try { window.scrollBy(0, 1); window.scrollBy(0, -1); } catch {}
+    try { if (audioRef.current?.state === 'suspended') audioRef.current.resume(); } catch {}
   }
 
   useEffect(() => {
+    startYouTubeLoop();   // primary
     requestWakeLock();
     startVideoLoop();
     startSilentAudio();
@@ -95,7 +106,6 @@ export function useKioskMode() {
     }
     document.addEventListener('visibilitychange', onVisibilityChange);
 
-    // User interaction (remote press) resumes audio context
     function onInteract() {
       try { audioRef.current?.resume(); } catch {}
     }
@@ -113,6 +123,7 @@ export function useKioskMode() {
       document.removeEventListener('keydown', onInteract);
       wakeLockRef.current?.release().catch(() => {});
       videoRef.current?.remove();
+      iframeRef.current?.remove();
       audioRef.current?.close().catch(() => {});
     };
   }, []);

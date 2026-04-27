@@ -2,17 +2,15 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, ReferenceLine,
 } from 'recharts';
-import { aprDailyData, formatINRShort } from '../data/salesData.js';
+import { formatINRShort } from '../data/salesData.js';
 
-const DAILY_TARGET = 576667;
-
-const CustomTooltip = ({ active, payload, label }) => {
+const CustomTooltip = ({ active, payload, label, dailyTarget, monthShort }) => {
   if (!active || !payload?.length) return null;
-  const rev = payload.find(p => p.dataKey === 'revenue')?.value;
-  const above = rev >= DAILY_TARGET;
+  const rev = payload.find(p => p.dataKey === 'revenue')?.value ?? 0;
+  const above = rev >= dailyTarget;
   return (
     <div className="card-glass rounded-lg p-2.5 text-xs border border-[#1a2d45]">
-      <div className="font-bold text-white mb-1">Apr {label}</div>
+      <div className="font-bold text-white mb-1">{monthShort} {label}</div>
       <div className="flex items-center gap-1.5">
         <div className="w-2 h-2 rounded-full" style={{ background: above ? '#22c55e' : '#f97316' }} />
         <span className="text-[#64748b]">Sales:</span>
@@ -24,21 +22,21 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-export default function DailyChart() {
+export default function DailyChart({ dailyData, dailyTarget, monthShort }) {
   return (
     <div className="card-glass rounded-xl p-4 h-full flex flex-col">
       <div className="flex items-center justify-between mb-3">
         <span className="text-[10px] font-bold tracking-widest uppercase text-[#64748b]">
-          April Daily Sales
+          {monthShort} Daily Sales
         </span>
         <span className="text-[10px] text-[#64748b]">
-          Target: <span className="text-[#f59e0b] font-semibold">{formatINRShort(DAILY_TARGET)}/day</span>
+          Target: <span className="text-[#f59e0b] font-semibold">{formatINRShort(dailyTarget)}/day</span>
         </span>
       </div>
 
       <div className="flex-1">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={aprDailyData} margin={{ top: 4, right: 4, bottom: 0, left: -16 }}>
+          <AreaChart data={dailyData} margin={{ top: 4, right: 4, bottom: 0, left: -16 }}>
             <defs>
               <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#22c55e" stopOpacity={0.4} />
@@ -60,9 +58,14 @@ export default function DailyChart() {
               tickLine={false}
               width={42}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(34,197,94,0.2)', strokeWidth: 1 }} />
+            <Tooltip
+              content={(props) => (
+                <CustomTooltip {...props} dailyTarget={dailyTarget} monthShort={monthShort} />
+              )}
+              cursor={{ stroke: 'rgba(34,197,94,0.2)', strokeWidth: 1 }}
+            />
             <ReferenceLine
-              y={DAILY_TARGET}
+              y={dailyTarget}
               stroke="#f59e0b"
               strokeDasharray="4 3"
               strokeWidth={1.5}

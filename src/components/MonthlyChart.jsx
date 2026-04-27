@@ -1,8 +1,8 @@
 import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Cell, ReferenceLine,
+  Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
-import { monthlyData, formatINRShort } from '../data/salesData.js';
+import { formatINRShort } from '../data/salesData.js';
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
@@ -20,7 +20,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-export default function MonthlyChart() {
+export default function MonthlyChart({ monthlyData }) {
   return (
     <div className="card-glass rounded-xl p-4 h-full flex flex-col">
       <div className="flex items-center justify-between mb-3">
@@ -67,7 +67,7 @@ export default function MonthlyChart() {
               {monthlyData.map((entry) => (
                 <Cell
                   key={entry.month}
-                  fill={entry.partial ? 'url(#barGrad)' : 'url(#barGrad)'}
+                  fill="url(#barGrad)"
                   opacity={entry.partial ? 0.7 : 1}
                 />
               ))}

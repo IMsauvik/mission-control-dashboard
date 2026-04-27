@@ -1,12 +1,11 @@
-import { channelData } from '../data/salesData.js';
 import ChannelCard from './ChannelCard.jsx';
 
-export default function ChannelGrid() {
+export default function ChannelGrid({ channelData, currentMonthLabel, daysDone, totalDays }) {
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-3 mb-2 flex-none">
         <span className="text-[10px] font-bold tracking-widest uppercase text-[#64748b]">
-          Channel Performance — April 2026 MTD (Day 23/30)
+          Channel Performance — {currentMonthLabel} MTD (Day {daysDone}/{totalDays})
         </span>
         <div className="flex-1 h-px bg-[#1a2d45]" />
         <div className="flex items-center gap-3 text-[9px] font-bold">

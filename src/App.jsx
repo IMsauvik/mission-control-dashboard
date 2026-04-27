@@ -77,8 +77,8 @@ export default function App() {
           value={formatINR(dailyAvg)}
           sub={`Need ${formatINR(Math.max(0, dailyTarget - dailyAvg))} more/day`}
           badge="PACE"
-          badgeColor={dailyAvg >= dailyTarget ? '#22c55e' : '#ef4444'}
-          accent={dailyAvg >= dailyTarget ? '#22c55e' : '#f8fafc'}
+          badgeColor={dailyAvg >= dailyTarget ? '#22c55e' : '#fb923c'}
+          accent={dailyAvg >= dailyTarget ? '#22c55e' : '#f1f5f9'}
         />
         <KPICard
           label={`${monthShort} Projection`}

@@ -5,13 +5,17 @@ export default function KPICard({ label, value, sub, subColor, accent, icon, bad
       style={accent ? { borderColor: `${accent}33`, boxShadow: `0 0 20px ${accent}10` } : {}}
     >
       <div className="flex items-start justify-between">
-        <span className="text-[10px] font-bold tracking-widest uppercase text-[#64748b]">
+        <span className="text-[11px] font-bold tracking-widest uppercase text-[#94a3b8]">
           {label}
         </span>
         {badge && (
           <span
-            className="text-[10px] font-bold px-1.5 py-0.5 rounded-md tracking-wide"
-            style={{ background: `${badgeColor || '#22c55e'}20`, color: badgeColor || '#22c55e' }}
+            className="text-[10px] font-black px-2 py-0.5 rounded-md tracking-wide border"
+            style={{
+              background: `${badgeColor || '#22c55e'}22`,
+              color: badgeColor || '#22c55e',
+              borderColor: `${badgeColor || '#22c55e'}44`,
+            }}
           >
             {badge}
           </span>
@@ -21,14 +25,14 @@ export default function KPICard({ label, value, sub, subColor, accent, icon, bad
       <div>
         <div
           className="font-black text-3xl leading-none tracking-tight"
-          style={{ color: accent || '#f8fafc' }}
+          style={{ color: accent || '#f1f5f9' }}
         >
           {value}
         </div>
         {sub && (
           <div
-            className="text-xs font-medium mt-1.5"
-            style={{ color: subColor || '#64748b' }}
+            className="text-[11px] font-semibold mt-1.5"
+            style={{ color: subColor || '#94a3b8' }}
           >
             {sub}
           </div>

@@ -74,10 +74,10 @@ export function formatINRShort(amount) {
 }
 
 export function getPctColor(pct) {
-  if (pct >= 100) return '#22c55e';
-  if (pct >= 75)  return '#f59e0b';
-  if (pct >= 50)  return '#f97316';
-  return '#ef4444';
+  if (pct >= 100) return '#22c55e';   // green  — ON FIRE
+  if (pct >= 75)  return '#38bdf8';   // sky blue — ON TRACK
+  if (pct >= 50)  return '#fb923c';   // bright orange — NEEDS PUSH
+  return '#f43f5e';                    // rose red — CRITICAL
 }
 
 export function getPctLabel(pct) {

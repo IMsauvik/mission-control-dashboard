@@ -48,8 +48,8 @@ export default function AchievementCard({ achievement, daysDone, totalDays, dail
   const trendArrow = trendUp ? '↑' : '↓';
 
   const pct = parseFloat(achievement);
-  const accentColor = pct >= 80 ? '#22c55e' : '#f97316';
-  const badgeLabel = pct >= 80 ? 'ON TRACK' : 'NEEDS PUSH';
+  const accentColor = pct >= 100 ? '#22c55e' : pct >= 75 ? '#38bdf8' : '#fb923c';
+  const badgeLabel = pct >= 100 ? 'ON FIRE' : pct >= 75 ? 'ON TRACK' : 'NEEDS PUSH';
 
   return (
     <div

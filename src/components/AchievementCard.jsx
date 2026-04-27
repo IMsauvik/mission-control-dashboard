@@ -53,7 +53,7 @@ export default function AchievementCard({ achievement, daysDone, totalDays, dail
 
   return (
     <div
-      className="card-glass rounded-xl p-4 flex flex-col justify-between overflow-hidden"
+      className="card-glass rounded-xl p-4 flex flex-col justify-between overflow-hidden min-h-[120px] lg:min-h-0"
       style={{ borderColor: `${accentColor}33`, boxShadow: `0 0 20px ${accentColor}10` }}
     >
       {/* Top row */}

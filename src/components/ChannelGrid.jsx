@@ -18,7 +18,7 @@ export default function ChannelGrid({ channelData, currentMonthLabel, daysDone, 
         </div>
       </div>
 
-      <div className="flex-1 grid grid-cols-4 gap-2 min-h-0">
+      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 min-h-0">
         {[...channelData].sort((a, b) => b.actual - a.actual).map((ch) => (
           <ChannelCard key={ch.name} channel={ch} />
         ))}

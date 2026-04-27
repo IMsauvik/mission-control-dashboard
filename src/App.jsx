@@ -21,15 +21,16 @@ export default function App() {
   } = data;
 
   const achievement = ((currentMTD / currentTarget) * 100).toFixed(1);
-  const daysLeft = totalDays - daysDone;
-  const dailyAvg = daysDone > 0 ? Math.round(currentMTD / daysDone) : 0;
+  const daysLeft    = totalDays - daysDone;
+  const dailyAvg    = daysDone > 0 ? Math.round(currentMTD / daysDone) : 0;
   const projectedMTD = dailyAvg * totalDays;
-  const monthShort = currentMonthLabel.split(' ')[0]; // "Apr '26" → "Apr"
+  const monthShort  = currentMonthLabel.split(' ')[0];
 
   return (
-    <div className="h-screen flex flex-col bg-imeco-bg bg-grid overflow-hidden" style={{ gap: '8px', padding: '8px' }}>
+    <div className="min-h-screen lg:h-screen flex flex-col bg-imeco-bg bg-grid overflow-y-auto lg:overflow-hidden"
+      style={{ gap: '8px', padding: '8px' }}>
 
-      {/* Sync / error status badge */}
+      {/* Status badges */}
       {error && (
         <div className="fixed top-2 right-2 z-50 text-[9px] bg-red-900/80 text-red-300 px-2 py-1 rounded-md border border-red-800/50">
           ⚠ Using cached data
@@ -42,14 +43,10 @@ export default function App() {
       )}
 
       {/* Header */}
-      <Header
-        currentMonthLabel={currentMonthLabel}
-        daysDone={daysDone}
-        totalDays={totalDays}
-      />
+      <Header currentMonthLabel={currentMonthLabel} daysDone={daysDone} totalDays={totalDays} />
 
       {/* KPI Row */}
-      <div className="flex-none grid grid-cols-5 gap-2" style={{ height: '152px' }}>
+      <div className="flex-none grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 lg:h-[152px]">
         <KPICard
           label="MTD Revenue"
           value={formatINR(currentMTD)}
@@ -90,23 +87,23 @@ export default function App() {
       </div>
 
       {/* Charts Row */}
-      <div className="flex-none grid grid-cols-6 gap-2" style={{ height: '230px' }}>
-        <div className="col-span-3">
+      <div className="flex-none grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2">
+        <div className="col-span-1 sm:col-span-2 lg:col-span-3 h-[220px] lg:h-[230px]">
           <MonthlyChart monthlyData={monthlyData} />
         </div>
-        <div className="col-span-1">
+        <div className="col-span-1 h-[200px] lg:h-[230px]">
           <DailyChart dailyData={dailyData} dailyTarget={dailyTarget} monthShort={monthShort} />
         </div>
-        <div className="col-span-1">
+        <div className="col-span-1 h-[200px] lg:h-[230px]">
           <ChannelPieChart channelData={channelData} monthShort={monthShort} />
         </div>
-        <div className="col-span-1">
+        <div className="col-span-1 h-[200px] lg:h-[230px]">
           <MRRGauge mrrGoal={currentTarget} currentMRR={currentMTD} />
         </div>
       </div>
 
       {/* Channel Grid */}
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 lg:min-h-0">
         <ChannelGrid
           channelData={channelData}
           currentMonthLabel={currentMonthLabel}

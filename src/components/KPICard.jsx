@@ -1,7 +1,7 @@
 export default function KPICard({ label, value, sub, subColor, accent, icon, badge, badgeColor }) {
   return (
     <div
-      className="card-glass rounded-xl p-4 flex flex-col justify-between"
+      className="card-glass rounded-xl p-4 flex flex-col justify-between min-h-[120px] lg:min-h-0"
       style={accent ? { borderColor: `${accent}33`, boxShadow: `0 0 20px ${accent}10` } : {}}
     >
       <div className="flex items-start justify-between">

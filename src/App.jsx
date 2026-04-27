@@ -1,5 +1,6 @@
 import Header from './components/Header.jsx';
 import KPICard from './components/KPICard.jsx';
+import AchievementCard from './components/AchievementCard.jsx';
 import MRRGauge from './components/MRRGauge.jsx';
 import MonthlyChart from './components/MonthlyChart.jsx';
 import DailyChart from './components/DailyChart.jsx';
@@ -61,13 +62,12 @@ export default function App() {
           badge="TARGET"
           badgeColor="#f59e0b"
         />
-        <KPICard
-          label="Achievement"
-          value={`${achievement}%`}
-          sub={`${daysDone}/${totalDays} days done`}
-          badge={parseFloat(achievement) >= 80 ? 'ON TRACK' : 'NEEDS PUSH'}
-          badgeColor={parseFloat(achievement) >= 80 ? '#22c55e' : '#f97316'}
-          accent={parseFloat(achievement) >= 80 ? '#22c55e' : '#f97316'}
+        <AchievementCard
+          achievement={`${achievement}%`}
+          daysDone={daysDone}
+          totalDays={totalDays}
+          dailyData={dailyData}
+          currentTarget={currentTarget}
         />
         <KPICard
           label="Daily Avg Pace"

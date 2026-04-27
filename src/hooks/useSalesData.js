@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { fetchAllSalesData } from '../data/sheetsApi.js';
 import {
   monthlyData as staticMonthlyData,
@@ -23,10 +23,13 @@ const STATIC_FALLBACK = {
 
 const REFRESH_MS = 5 * 60 * 1000;
 
+const MAX_FAILURES = 12; // ~1 hour of consecutive failures → reload page
+
 export function useSalesData() {
   const [data, setData] = useState(STATIC_FALLBACK);
   const [syncing, setSyncing] = useState(true);
   const [error, setError] = useState(null);
+  const failureCount = useRef(0);
 
   async function load() {
     setSyncing(true);
@@ -34,9 +37,12 @@ export function useSalesData() {
       const result = await fetchAllSalesData();
       setData(result);
       setError(null);
+      failureCount.current = 0;
     } catch (err) {
       console.error('[SalesData]', err.message);
       setError(err.message);
+      failureCount.current += 1;
+      if (failureCount.current >= MAX_FAILURES) window.location.reload();
     } finally {
       setSyncing(false);
     }

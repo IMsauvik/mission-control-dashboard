@@ -6,10 +6,12 @@ import MonthlyChart from './components/MonthlyChart.jsx';
 import DailyChart from './components/DailyChart.jsx';
 import ChannelGrid from './components/ChannelGrid.jsx';
 import { useSalesData } from './hooks/useSalesData.js';
+import { useKioskMode } from './hooks/useKioskMode.js';
 import { formatINR } from './data/salesData.js';
 
 export default function App() {
   const { data, syncing, error } = useSalesData();
+  useKioskMode();
 
   const {
     currentMTD, currentTarget, daysDone, totalDays, dailyTarget,

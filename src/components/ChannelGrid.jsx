@@ -25,13 +25,29 @@ export default function ChannelGrid({ channelData, currentMonthLabel, daysDone, 
         </div>
       </div>
 
-      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 min-h-0">
+      {/* Grid is relative so the video can be absolutely positioned inside it */}
+      <div
+        className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 min-h-0 relative"
+        style={{ gridAutoRows: '1fr' }}
+      >
         {sorted.map((ch) => (
           <ChannelCard key={ch.name} channel={ch} />
         ))}
-        {/* Video slot fills the remaining 3 columns in the last row on large screens */}
+
+        {/* Floating video — sits over the empty 3-column space in the last row */}
         {videoSlot && (
-          <div className="hidden lg:block lg:col-span-3">
+          <div
+            className="absolute bottom-0 right-0 hidden lg:block"
+            style={{
+              width: 'calc(75% - 6px)',
+              height: 'calc(25% - 4px)',
+              borderRadius: 10,
+              overflow: 'hidden',
+              border: '1px solid rgba(34,197,94,0.25)',
+              boxShadow: '0 8px 40px rgba(0,0,0,0.55), 0 0 18px rgba(34,197,94,0.10)',
+              zIndex: 10,
+            }}
+          >
             {videoSlot}
           </div>
         )}

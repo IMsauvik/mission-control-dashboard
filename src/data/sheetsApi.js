@@ -54,7 +54,7 @@ async function listSheets() {
 }
 
 async function fetchSheetRows(sheetName) {
-  const encoded = encodeURIComponent(`'${sheetName}'!A1:Z50`);
+  const encoded = encodeURIComponent(`'${sheetName}'!A1:Z65`);
   const res = await fetch(`${BASE}/${SPREADSHEET_ID}/values/${encoded}?key=${API_KEY}`);
   if (!res.ok) throw new Error(`Range fetch ${res.status} for "${sheetName}"`);
   const data = await res.json();
@@ -162,8 +162,7 @@ export async function fetchAllSalesData() {
     .filter(({ name, meta }) =>
       meta !== null &&
       name.toLowerCase().startsWith('dsr') &&
-      !name.toLowerCase().includes('oct') &&
-      !name.toLowerCase().includes('nov') &&
+      !(name.toLowerCase().includes('oct') && name.toLowerCase().includes('nov')) &&
       !name.toLowerCase().includes('daily report')
     )
     .sort((a, b) => a.meta.sortKey - b.meta.sortKey);

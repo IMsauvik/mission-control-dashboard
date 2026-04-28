@@ -1,40 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
 import { fetchAllSalesData } from '../data/sheetsApi.js';
-import {
-  monthlyData as staticMonthlyData,
-  channelData as staticChannelData,
-  aprDailyData as staticDailyData,
-  APRIL_MTD, APRIL_TARGET, APRIL_DAYS_DONE, APRIL_TOTAL_DAYS,
-  CURRENT_MRR,
-} from '../data/salesData.js';
-
-const STATIC_FALLBACK = {
-  monthlyData: staticMonthlyData,
-  channelData: staticChannelData,
-  dailyData: staticDailyData,
-  currentMTD: APRIL_MTD,
-  currentTarget: APRIL_TARGET,
-  daysDone: APRIL_DAYS_DONE,
-  totalDays: APRIL_TOTAL_DAYS,
-  dailyTarget: Math.round(APRIL_TARGET / APRIL_TOTAL_DAYS),
-  currentMRR: CURRENT_MRR,
-  currentMonthLabel: "Apr '26",
-};
 
 const REFRESH_MS = 5 * 60 * 1000;
-
 const MAX_FAILURES = 12; // ~1 hour of consecutive failures → reload page
 
 export function useSalesData() {
-  const [data, setData] = useState(STATIC_FALLBACK);
+  const [data, setData] = useState(null);
   const [syncing, setSyncing] = useState(true);
   const [error, setError] = useState(null);
   const failureCount = useRef(0);
+  const lastGoodData = useRef(null);
 
   async function load() {
     setSyncing(true);
     try {
       const result = await fetchAllSalesData();
+      lastGoodData.current = result;
       setData(result);
       setError(null);
       failureCount.current = 0;
@@ -43,6 +24,8 @@ export function useSalesData() {
       setError(err.message);
       failureCount.current += 1;
       if (failureCount.current >= MAX_FAILURES) window.location.reload();
+      // Fall back to last known good data so the dashboard stays visible
+      if (lastGoodData.current) setData(lastGoodData.current);
     } finally {
       setSyncing(false);
     }

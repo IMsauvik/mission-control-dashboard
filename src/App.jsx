@@ -15,6 +15,19 @@ export default function App() {
   const { data, syncing, error } = useSalesData();
   useKioskMode();
 
+  if (!data) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-imeco-bg">
+        <div className="text-center">
+          <div className="w-10 h-10 border-2 border-[#22c55e] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="text-[#94a3b8] text-sm font-medium tracking-widest uppercase">
+            Loading dashboard…
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const {
     currentMTD, currentTarget, daysDone, totalDays, dailyTarget,
     monthlyData, channelData, dailyData,

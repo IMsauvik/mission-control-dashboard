@@ -31,7 +31,7 @@ function parseSheetMeta(name) {
 }
 
 function getMonthLabel(meta) {
-  return `${MONTH_LABELS[meta.month]} '${String(meta.year).slice(2)}`;
+  return `${MONTH_LABELS[meta.month]} ${meta.year}`;
 }
 
 function getDaysInMonth(month, year) {
@@ -143,12 +143,13 @@ function parseSheet(rows, meta) {
   }
 
   return {
+    meta,
     label: getMonthLabel(meta),
     monthTarget,
     monthActual,
     channels,
     dailyData,
-    daysDone: dailyData.length,
+    dataRowsDone: dailyData.length,
     daysInMonth,
     dailyTarget,
   };
@@ -186,13 +187,13 @@ export async function fetchAllSalesData() {
       month: m.label,
       revenue: m.monthActual,
       target: m.monthTarget,
-      partial: i === valid.length - 1 && m.daysDone < m.daysInMonth,
+      partial: i === valid.length - 1 && m.dataRowsDone < m.daysInMonth,
     })),
     channelData: current.channels,
     dailyData: current.dailyData,
     currentMTD: current.monthActual,
     currentTarget: current.monthTarget,
-    daysDone: current.daysDone,
+    daysDone: current.dataRowsDone,
     totalDays: current.daysInMonth,
     dailyTarget: current.dailyTarget,
     currentMRR: lastComplete ? lastComplete.monthActual : current.monthActual,

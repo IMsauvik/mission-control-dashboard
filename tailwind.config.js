@@ -18,15 +18,25 @@ export default {
       animation: {
         'pulse-green': 'pulse-green 2s ease-in-out infinite',
         shimmer: 'shimmer 2s linear infinite',
+        'fade-in-up': 'fadeInUp 0.5s ease-out both',
+        'glow-pulse': 'glowPulse 3s ease-in-out infinite',
       },
       keyframes: {
         'pulse-green': {
-          '0%, 100%': { opacity: 1 },
-          '50%': { opacity: 0.4 },
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.4' },
         },
         shimmer: {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
+        },
+        fadeInUp: {
+          from: { opacity: '0', transform: 'translateY(18px)' },
+          to:   { opacity: '1', transform: 'translateY(0)' },
+        },
+        glowPulse: {
+          '0%, 100%': { boxShadow: '0 0 16px rgba(34,197,94,0.08)' },
+          '50%':       { boxShadow: '0 0 36px rgba(34,197,94,0.28)' },
         },
       },
     },

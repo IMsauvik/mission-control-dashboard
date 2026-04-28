@@ -1,6 +1,8 @@
 import ChannelCard from './ChannelCard.jsx';
 
-export default function ChannelGrid({ channelData, currentMonthLabel, daysDone, totalDays }) {
+export default function ChannelGrid({ channelData, currentMonthLabel, daysDone, totalDays, videoSlot }) {
+  const sorted = [...channelData].sort((a, b) => b.actual - a.actual);
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-3 mb-2 flex-none">
@@ -9,7 +11,12 @@ export default function ChannelGrid({ channelData, currentMonthLabel, daysDone, 
         </span>
         <div className="flex-1 h-px bg-[#1a2d45]" />
         <div className="flex items-center gap-3 text-[11px] font-bold">
-          {[['#22c55e', '≥100% ON FIRE'], ['#38bdf8', '75–99% ON TRACK'], ['#fb923c', '50–74% NEEDS PUSH'], ['#f43f5e', '<50% CRITICAL']].map(([color, lbl]) => (
+          {[
+            ['#22c55e', '≥100% ON FIRE'],
+            ['#38bdf8', '75–99% ON TRACK'],
+            ['#fb923c', '50–74% NEEDS PUSH'],
+            ['#f43f5e', '<50% CRITICAL'],
+          ].map(([color, lbl]) => (
             <span key={lbl} className="flex items-center gap-1">
               <span className="w-2 h-2 rounded-full inline-block" style={{ background: color }} />
               <span style={{ color }}>{lbl}</span>
@@ -19,9 +26,15 @@ export default function ChannelGrid({ channelData, currentMonthLabel, daysDone, 
       </div>
 
       <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 min-h-0">
-        {[...channelData].sort((a, b) => b.actual - a.actual).map((ch) => (
+        {sorted.map((ch) => (
           <ChannelCard key={ch.name} channel={ch} />
         ))}
+        {/* Video slot fills the remaining 3 columns in the last row on large screens */}
+        {videoSlot && (
+          <div className="hidden lg:block lg:col-span-3">
+            {videoSlot}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -34,16 +34,17 @@ export default function App() {
     currentMonthLabel,
   } = data;
 
-  const achievement = ((currentMTD / currentTarget) * 100).toFixed(1);
-  const daysLeft    = totalDays - daysDone;
-  const dailyAvg    = daysDone > 0 ? Math.round(currentMTD / daysDone) : 0;
+  const achievement  = ((currentMTD / currentTarget) * 100).toFixed(1);
+  const daysLeft     = totalDays - daysDone;
+  const dailyAvg     = daysDone > 0 ? Math.round(currentMTD / daysDone) : 0;
   const projectedMTD = dailyAvg * totalDays;
-  const monthShort  = currentMonthLabel.split(' ')[0];
+  const monthShort   = currentMonthLabel.split(' ')[0];
 
   return (
-    <div className="min-h-screen lg:h-screen flex flex-col bg-imeco-bg bg-grid overflow-y-auto lg:overflow-hidden"
-      style={{ gap: '8px', padding: '8px' }}>
-
+    <div
+      className="min-h-screen lg:h-screen flex flex-col bg-imeco-bg bg-grid overflow-y-auto lg:overflow-hidden"
+      style={{ gap: '8px', padding: '8px' }}
+    >
       {/* Status badges */}
       {error && (
         <div className="fixed top-2 right-2 z-50 text-[9px] bg-red-900/80 text-red-300 px-2 py-1 rounded-md border border-red-800/50">
@@ -57,10 +58,15 @@ export default function App() {
       )}
 
       {/* Header */}
-      <Header currentMonthLabel={currentMonthLabel} daysDone={daysDone} totalDays={totalDays} />
+      <div style={{ animation: 'fadeInUp 0.4s ease-out 0ms both' }}>
+        <Header currentMonthLabel={currentMonthLabel} daysDone={daysDone} totalDays={totalDays} />
+      </div>
 
       {/* KPI Row */}
-      <div className="flex-none grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 lg:h-[152px]">
+      <div
+        className="flex-none grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 lg:h-[152px]"
+        style={{ animation: 'fadeInUp 0.4s ease-out 80ms both' }}
+      >
         <KPICard
           label="MTD Revenue"
           value={formatINR(currentMTD)}
@@ -100,32 +106,41 @@ export default function App() {
         />
       </div>
 
-      {/* Charts Row */}
-      <div className="flex-none grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2">
-        <div className="col-span-1 sm:col-span-2 lg:col-span-3 h-[220px] lg:h-[230px]">
+      {/* Charts Row — DailyChart gets 2 cols, VideoCard removed (now floating) */}
+      <div
+        className="flex-none grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2"
+        style={{ animation: 'fadeInUp 0.4s ease-out 180ms both' }}
+      >
+        <div className="col-span-1 sm:col-span-2 lg:col-span-3 h-[220px] lg:h-[260px]">
           <MonthlyChart monthlyData={monthlyData} />
         </div>
-        <div className="col-span-1 h-[200px] lg:h-[230px]">
-          <DailyChart dailyData={dailyData} dailyTarget={dailyTarget} monthShort={monthShort} />
+        <div className="col-span-1 sm:col-span-2 lg:col-span-2 h-[220px] lg:h-[260px]">
+          <DailyChart
+            dailyData={dailyData}
+            dailyTarget={dailyTarget}
+            monthShort={monthShort}
+            daysDone={daysDone}
+          />
         </div>
-        <div className="col-span-1 h-[200px] lg:h-[230px]">
+        <div className="col-span-1 h-[200px] lg:h-[260px]">
           <ChannelPieChart channelData={channelData} monthShort={monthShort} />
         </div>
-        <div className="col-span-1 h-[200px] lg:h-[230px]">
+        <div className="col-span-1 h-[200px] lg:h-[260px]">
           <MRRGauge mrrGoal={currentTarget} currentMRR={currentMTD} />
-        </div>
-        <div className="col-span-1 h-[200px] lg:h-[230px]">
-          <VideoCard />
         </div>
       </div>
 
       {/* Channel Grid */}
-      <div className="flex-1 min-h-0 lg:min-h-0">
+      <div
+        className="flex-1 min-h-0 lg:min-h-0"
+        style={{ animation: 'fadeInUp 0.4s ease-out 280ms both' }}
+      >
         <ChannelGrid
           channelData={channelData}
           currentMonthLabel={currentMonthLabel}
           daysDone={daysDone}
           totalDays={totalDays}
+          videoSlot={<VideoCard />}
         />
       </div>
     </div>

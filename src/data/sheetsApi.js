@@ -1,4 +1,7 @@
 const SPREADSHEET_ID = import.meta.env.VITE_SPREADSHEET_ID;
+const AD_SPEND_SHEET_ID = import.meta.env.VITE_AD_SPEND_SPREADSHEET_ID;
+const D2C_AD_SPEND_SHEET_ID = import.meta.env.VITE_D2C_AD_SPEND_SPREADSHEET_ID;
+const MEESHO_AD_SPEND_SHEET_ID = import.meta.env.VITE_MEESHO_AD_SPEND_SPREADSHEET_ID;
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
 const BASE = 'https://sheets.googleapis.com/v4/spreadsheets';
 
@@ -18,6 +21,7 @@ const MONTH_MAP = {
 };
 
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const LONG_MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 function parseSheetMeta(name) {
   const stripped = name.replace(/^dsr[_ ]*/i, '').toLowerCase().trim();
@@ -53,12 +57,94 @@ async function listSheets() {
   return data.sheets.map(s => s.properties.title);
 }
 
-async function fetchSheetRows(sheetName) {
-  const encoded = encodeURIComponent(`'${sheetName}'!A1:Z65`);
-  const res = await fetch(`${BASE}/${SPREADSHEET_ID}/values/${encoded}?key=${API_KEY}`);
+async function fetchSheetRows(sheetName, spreadsheetId = SPREADSHEET_ID, range = 'A1:Z65') {
+  if (!API_KEY) throw new Error('VITE_GOOGLE_API_KEY not configured');
+  if (!spreadsheetId) throw new Error('Spreadsheet ID not configured');
+  const encoded = encodeURIComponent(`'${sheetName}'!${range}`);
+  const res = await fetch(`${BASE}/${spreadsheetId}/values/${encoded}?key=${API_KEY}`);
   if (!res.ok) throw new Error(`Range fetch ${res.status} for "${sheetName}"`);
   const data = await res.json();
   return data.values || [];
+}
+
+// Ad-spend sources. Each entry says: which DSR-side channel name to populate,
+// which spreadsheet to fetch, and how to extract the spend total.
+//   - `tab` (string)            → fixed-tab source (e.g. AZ, FK). Daily rows
+//                                  in col F are summed; rows filtered by the
+//                                  current month name in col A.
+//   - `tabFor` (meta → string)  → per-month-tab source (e.g. May'26). Tab name
+//                                  encodes the month; sum logic same as above.
+//   - `cell` (string)           → single-cell source (e.g. B1). Reads that one
+//                                  cell directly. Use when the sheet keeps the
+//                                  pre-computed total in a header cell.
+const AD_SPEND_SOURCES = [
+  { spreadsheetId: AD_SPEND_SHEET_ID,     channel: 'Amazon (SC & VC)',   tab: 'AZ' },
+  { spreadsheetId: AD_SPEND_SHEET_ID,     channel: 'Flipkart',           tab: 'FK' },
+  { spreadsheetId: AD_SPEND_SHEET_ID,     channel: 'Blinkit',            tab: 'Blinkit' },
+  { spreadsheetId: AD_SPEND_SHEET_ID,     channel: 'Myntra',             tab: 'Myntra' },
+  {
+    spreadsheetId: D2C_AD_SPEND_SHEET_ID,
+    channel: 'D2C Website & Bulk',
+    tabFor: (meta) => `${LONG_MONTH_NAMES[meta.month]}'${String(meta.year).slice(-2)}`,
+  },
+  {
+    spreadsheetId: MEESHO_AD_SPEND_SHEET_ID,
+    channel: 'Meesho (incl. B2B)',
+    tabFor: (meta) => `${LONG_MONTH_NAMES[meta.month].toUpperCase()}-${meta.year}`,
+    cell: 'B1',
+  },
+];
+
+const AD_TRACKED_CHANNELS = new Set(AD_SPEND_SOURCES.map(s => s.channel));
+
+async function fetchAdSpendForSource(src, meta) {
+  if (!src.spreadsheetId) return null;
+  const tab = src.tabFor ? src.tabFor(meta) : src.tab;
+  if (!tab) return null;
+
+  // Single-cell mode (e.g. Meesho's B1 pre-computed total).
+  if (src.cell) {
+    try {
+      const rows = await fetchSheetRows(tab, src.spreadsheetId, src.cell);
+      return parseNum(rows[0]?.[0]);
+    } catch (err) {
+      console.warn(`[AdSpend ${src.channel}/${tab}!${src.cell}]`, err.message);
+      return null;
+    }
+  }
+
+  // Daily-rows mode: sum col F where col A starts with the current month name.
+  const monthShort = MONTH_LABELS[meta.month]?.toLowerCase();
+  if (!monthShort) return null;
+  try {
+    const rows = await fetchSheetRows(tab, src.spreadsheetId, 'A1:F65');
+    let sum = 0;
+    for (let i = 2; i < rows.length; i++) {
+      const dateCell = String(rows[i]?.[0] || '').trim();
+      const match = dateCell.match(/^([A-Za-z]+)[-\s]\d{1,2}$/);
+      if (!match) continue;
+      if (match[1].toLowerCase() !== monthShort) continue;
+      sum += parseNum(rows[i][5]); // Column F = "Spends Ach"
+    }
+    return sum;
+  } catch (err) {
+    console.warn(`[AdSpend ${src.channel}/${tab}]`, err.message);
+    return null;
+  }
+}
+
+async function fetchAdSpendForMonth(meta) {
+  const entries = await Promise.all(
+    AD_SPEND_SOURCES.map(async (src) => {
+      const sum = await fetchAdSpendForSource(src, meta);
+      return [src.channel, sum];
+    })
+  );
+  const out = new Map();
+  for (const [name, sum] of entries) {
+    if (sum !== null && sum > 0) out.set(name, sum);
+  }
+  return out;
 }
 
 function parseSheet(rows, meta) {
@@ -93,10 +179,29 @@ function parseSheet(rows, meta) {
       target,
       actual,
       pct: target > 0 ? Math.round((actual / target) * 100) : 0,
+      colIdx: i,
+      daily: [],
     });
   }
 
-  // Merge Meesho + Meesho B2B into one combined card
+  // Monthly target = sum of all channel targets (more robust than reading Total column)
+  const monthActual = parseNum(actualRow[totalIdx]);
+  const daysInMonth = getDaysInMonth(meta.month, meta.year);
+
+  const dailyData = [];
+  for (const row of dailyRows) {
+    if (!row[0]) continue;
+    const d = new Date(row[0]);
+    if (isNaN(d.getTime())) continue;
+    const revenue = parseNum(row[totalIdx]);
+    if (revenue <= 0) continue;
+    dailyData.push({ day: String(d.getDate()), revenue });
+    for (const ch of channels) {
+      ch.daily.push(parseNum(row[ch.colIdx]));
+    }
+  }
+
+  // Merge Meesho + Meesho B2B into one combined card (sum daily arrays element-wise)
   const meesho = channels.find(c => c.name.toLowerCase() === 'meesho');
   const meeshob2b = channels.find(c => c.name.toLowerCase() === 'meesho b2b');
   if (meesho && meeshob2b) {
@@ -104,6 +209,7 @@ function parseSheet(rows, meta) {
     meesho.target += meeshob2b.target;
     meesho.actual += meeshob2b.actual;
     meesho.pct = meesho.target > 0 ? Math.round((meesho.actual / meesho.target) * 100) : 0;
+    meesho.daily = meesho.daily.map((v, i) => v + (meeshob2b.daily[i] || 0));
     channels.splice(channels.indexOf(meeshob2b), 1);
   }
 
@@ -114,11 +220,15 @@ function parseSheet(rows, meta) {
   }
   const amazonChannels = channels.filter(c => isAmazonChannel(c.name));
   if (amazonChannels.length >= 2) {
+    const dailyLen = amazonChannels[0]?.daily?.length || 0;
     const combined = {
       name: 'Amazon (SC & VC)',
       target: amazonChannels.reduce((s, c) => s + c.target, 0),
       actual: amazonChannels.reduce((s, c) => s + c.actual, 0),
       pct: 0,
+      daily: Array.from({ length: dailyLen }, (_, i) =>
+        amazonChannels.reduce((s, c) => s + (c.daily[i] || 0), 0)
+      ),
     };
     combined.pct = combined.target > 0 ? Math.round((combined.actual / combined.target) * 100) : 0;
     const firstIdx = channels.indexOf(amazonChannels[0]);
@@ -126,20 +236,18 @@ function parseSheet(rows, meta) {
     amazonChannels.forEach(c => channels.splice(channels.indexOf(c), 1));
   }
 
-  // Monthly target = sum of all channel targets (more robust than reading Total column)
   const monthTarget = channels.reduce((sum, ch) => sum + ch.target, 0);
-  const monthActual = parseNum(actualRow[totalIdx]);
-  const daysInMonth = getDaysInMonth(meta.month, meta.year);
   const dailyTarget = monthTarget > 0 ? Math.round(monthTarget / daysInMonth) : 0;
+  for (const d of dailyData) d.target = dailyTarget;
 
-  const dailyData = [];
-  for (const row of dailyRows) {
-    if (!row[0]) continue;
-    const d = new Date(row[0]);
-    if (isNaN(d.getTime())) continue;
-    const revenue = parseNum(row[totalIdx]);
-    if (revenue <= 0) continue;
-    dailyData.push({ day: String(d.getDate()), revenue, target: dailyTarget });
+  const dataRowsDone = dailyData.length;
+  const dayFrac = daysInMonth > 0 ? dataRowsDone / daysInMonth : 0;
+  for (const ch of channels) {
+    ch.expected = Math.round(ch.target * dayFrac);
+    ch.pacePct = ch.expected > 0
+      ? Math.round((ch.actual / ch.expected) * 100)
+      : (ch.actual > 0 ? 999 : 0);
+    ch.delta = ch.actual - ch.expected;
   }
 
   return {
@@ -181,6 +289,33 @@ export async function fetchAllSalesData() {
 
   const current = valid[valid.length - 1];
   const lastComplete = valid.length >= 2 ? valid[valid.length - 2] : null;
+
+  const N = current.dataRowsDone;
+  const lastByName = lastComplete
+    ? new Map(lastComplete.channels.map(c => [c.name, c]))
+    : null;
+  for (const ch of current.channels) {
+    const prev = lastByName?.get(ch.name);
+    if (!prev || !prev.daily) {
+      ch.lastSameDays = null;
+      ch.prevDailySlice = null;
+      ch.vsLastPct = null;
+      continue;
+    }
+    const slice = prev.daily.slice(0, N);
+    const sum = slice.reduce((s, v) => s + v, 0);
+    ch.lastSameDays = sum;
+    ch.prevDailySlice = slice;
+    ch.vsLastPct = sum > 0
+      ? Math.round(((ch.actual - sum) / sum) * 100)
+      : (ch.actual > 0 ? null : 0);
+  }
+
+  const adSpendByName = await fetchAdSpendForMonth(current.meta);
+  for (const ch of current.channels) {
+    ch.adSpend = adSpendByName.get(ch.name) ?? null;
+    ch.adTracked = AD_TRACKED_CHANNELS.has(ch.name);
+  }
 
   return {
     monthlyData: valid.map((m, i) => ({

@@ -53,16 +53,16 @@ export default function AchievementCard({ achievement, daysDone, totalDays, dail
 
   return (
     <div
-      className="card-glass rounded-xl p-4 flex flex-col justify-between overflow-hidden min-h-[120px] lg:min-h-0"
+      className="card-glass rounded-xl px-3 py-2 flex flex-col justify-between overflow-hidden min-h-[88px] lg:min-h-0"
       style={{ borderColor: `${accentColor}33`, boxShadow: `0 0 20px ${accentColor}10` }}
     >
       {/* Top row */}
       <div className="flex items-start justify-between">
-        <span className="text-[11px] font-bold tracking-widest uppercase text-[#64748b]">
+        <span className="text-[10px] font-bold tracking-widest uppercase text-[#64748b]">
           Achievement
         </span>
         <span
-          className="text-[11px] font-bold px-1.5 py-0.5 rounded-md tracking-wide"
+          className="text-[9px] font-bold px-1.5 py-0.5 rounded-md tracking-wide"
           style={{ background: `${accentColor}20`, color: accentColor }}
         >
           {badgeLabel}
@@ -71,21 +71,21 @@ export default function AchievementCard({ achievement, daysDone, totalDays, dail
 
       {/* Value + sub */}
       <div>
-        <div className="font-black text-3xl leading-none tracking-tight" style={{ color: accentColor }}>
+        <div className="font-black text-[22px] leading-none tracking-tight" style={{ color: accentColor }}>
           {achievement}
         </div>
-        <div className="flex items-center gap-2 mt-1.5">
-          <span className="text-xs font-medium text-[#64748b]">
+        <div className="flex items-center gap-2 mt-1">
+          <span className="text-[10px] font-medium text-[#64748b]">
             {daysDone}/{totalDays} days done
           </span>
-          <span className="text-[11px] font-bold" style={{ color: trendColor }}>
+          <span className="text-[10px] font-bold" style={{ color: trendColor }}>
             {trendArrow} {todayDeltaPct.toFixed(1)}% today
           </span>
         </div>
       </div>
 
       {/* Sparkline */}
-      <div className="mt-1 -mx-1">
+      <div className="mt-0.5 -mx-1">
         <Sparkline values={sparkline} color={accentColor} />
       </div>
     </div>

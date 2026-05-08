@@ -64,7 +64,7 @@ export default function App() {
 
       {/* KPI Row */}
       <div
-        className="flex-none grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 lg:h-[152px]"
+        className="flex-none grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 lg:h-[96px]"
         style={{ animation: 'fadeInUp 0.4s ease-out 80ms both' }}
       >
         <KPICard

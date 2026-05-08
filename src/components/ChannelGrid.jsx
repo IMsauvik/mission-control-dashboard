@@ -31,7 +31,7 @@ export default function ChannelGrid({ channelData, currentMonthLabel, daysDone, 
         style={{ gridAutoRows: '1fr' }}
       >
         {sorted.map((ch) => (
-          <ChannelCard key={ch.name} channel={ch} />
+          <ChannelCard key={ch.name} channel={ch} totalDays={totalDays} />
         ))}
 
         {/* Floating video — sits over the empty 3-column space in the last row */}
@@ -39,12 +39,13 @@ export default function ChannelGrid({ channelData, currentMonthLabel, daysDone, 
           <div
             className="absolute bottom-0 right-0 hidden lg:block"
             style={{
-              width: 'calc(75% - 6px)',
-              height: 'calc(25% - 4px)',
-              borderRadius: 10,
+              width: 'calc(15% - 4px)',
+              height: 'calc(13% - 2px)',
+              borderRadius: 8,
               overflow: 'hidden',
-              border: '1px solid rgba(34,197,94,0.25)',
-              boxShadow: '0 8px 40px rgba(0,0,0,0.55), 0 0 18px rgba(34,197,94,0.10)',
+              border: '1px solid rgba(34,197,94,0.2)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+              opacity: 0.85,
               zIndex: 10,
             }}
           >

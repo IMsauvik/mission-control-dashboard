@@ -311,6 +311,10 @@ export async function fetchAllSalesData() {
       : (ch.actual > 0 ? null : 0);
   }
 
+  const lastMonthSameDays = lastComplete
+    ? lastComplete.dailyData.slice(0, N).reduce((s, d) => s + (d.revenue || 0), 0)
+    : null;
+
   const adSpendByName = await fetchAdSpendForMonth(current.meta);
   for (const ch of current.channels) {
     ch.adSpend = adSpendByName.get(ch.name) ?? null;
@@ -332,6 +336,7 @@ export async function fetchAllSalesData() {
     totalDays: current.daysInMonth,
     dailyTarget: current.dailyTarget,
     currentMRR: lastComplete ? lastComplete.monthActual : current.monthActual,
+    lastMonthSameDays,
     currentMonthLabel: current.label,
   };
 }

@@ -1,7 +1,7 @@
-export default function KPICard({ label, value, sub, subColor, accent, icon, badge, badgeColor }) {
+export default function KPICard({ label, value, sub, subColor, accent, icon, badge, badgeColor, cornerBadge, cornerColor }) {
   return (
     <div
-      className="card-glass rounded-xl px-3 py-2 flex flex-col justify-between min-h-[88px] lg:min-h-0"
+      className="card-glass rounded-xl px-3 py-2 flex flex-col justify-between min-h-[88px] lg:min-h-0 relative"
       style={accent ? { borderColor: `${accent}33`, boxShadow: `0 0 20px ${accent}10` } : {}}
     >
       <div className="flex items-start justify-between">
@@ -38,6 +38,20 @@ export default function KPICard({ label, value, sub, subColor, accent, icon, bad
           </div>
         )}
       </div>
+
+      {cornerBadge && (
+        <div
+          className="absolute bottom-2 right-2 text-[10px] font-black px-1.5 py-0.5 rounded-md tracking-wide border leading-none"
+          style={{
+            background: `${cornerColor || '#22c55e'}22`,
+            color: cornerColor || '#22c55e',
+            borderColor: `${cornerColor || '#22c55e'}44`,
+          }}
+          title="vs last month, same days"
+        >
+          {cornerBadge}
+        </div>
+      )}
     </div>
   );
 }

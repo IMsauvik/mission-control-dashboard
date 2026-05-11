@@ -31,8 +31,18 @@ export default function App() {
   const {
     currentMTD, currentTarget, daysDone, totalDays, dailyTarget,
     monthlyData, channelData, dailyData,
-    currentMonthLabel,
+    currentMonthLabel, lastMonthSameDays,
   } = data;
+
+  const vsLastMoPct = lastMonthSameDays && lastMonthSameDays > 0
+    ? Math.round(((currentMTD - lastMonthSameDays) / lastMonthSameDays) * 100)
+    : null;
+  const vsLastMoLabel = vsLastMoPct !== null
+    ? `${vsLastMoPct >= 0 ? '▲' : '▼'} ${Math.abs(vsLastMoPct)}% vs LM`
+    : null;
+  const vsLastMoColor = vsLastMoPct === null
+    ? '#94a3b8'
+    : vsLastMoPct >= 0 ? '#22c55e' : '#ef4444';
 
   const achievement  = ((currentMTD / currentTarget) * 100).toFixed(1);
   const daysLeft     = totalDays - daysDone;
@@ -74,6 +84,8 @@ export default function App() {
           badge={currentMonthLabel.toUpperCase()}
           badgeColor="#22c55e"
           accent="#22c55e"
+          cornerBadge={vsLastMoLabel}
+          cornerColor={vsLastMoColor}
         />
         <KPICard
           label="Monthly Target"

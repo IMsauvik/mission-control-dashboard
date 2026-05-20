@@ -1,16 +1,16 @@
 import { formatINR, getPctColor, getPctLabel } from '../data/salesData.js';
 
 function badgeStyle(pct, color) {
-  if (pct >= 100) return { background: 'rgba(34,197,94,0.18)',  color, border: '1px solid rgba(34,197,94,0.35)' };
-  if (pct >= 75)  return { background: 'rgba(56,189,248,0.18)', color, border: '1px solid rgba(56,189,248,0.35)' };
-  if (pct >= 50)  return { background: 'rgba(251,146,60,0.25)', color, border: '1px solid rgba(251,146,60,0.55)', boxShadow: '0 0 8px rgba(251,146,60,0.3)' };
-  return           { background: 'rgba(244,63,94,0.25)',  color, border: '1px solid rgba(244,63,94,0.55)', boxShadow: '0 0 8px rgba(244,63,94,0.35)' };
+  if (pct >= 100) return { background: 'rgba(34,197,94,0.18)', color, border: '1px solid rgba(34,197,94,0.35)' };
+  if (pct >= 75) return { background: 'rgba(56,189,248,0.18)', color, border: '1px solid rgba(56,189,248,0.35)' };
+  if (pct >= 50) return { background: 'rgba(251,146,60,0.25)', color, border: '1px solid rgba(251,146,60,0.55)', boxShadow: '0 0 8px rgba(251,146,60,0.3)' };
+  return { background: 'rgba(244,63,94,0.25)', color, border: '1px solid rgba(244,63,94,0.55)', boxShadow: '0 0 8px rgba(244,63,94,0.35)' };
 }
 
 function barGradient(pct) {
   if (pct >= 100) return 'linear-gradient(90deg, #16a34a, #22c55e, #4ade80)';
-  if (pct >= 75)  return 'linear-gradient(90deg, #0284c7, #38bdf8)';
-  if (pct >= 50)  return 'linear-gradient(90deg, #ea580c, #fb923c)';
+  if (pct >= 75) return 'linear-gradient(90deg, #0284c7, #38bdf8)';
+  if (pct >= 50) return 'linear-gradient(90deg, #ea580c, #fb923c)';
   return 'linear-gradient(90deg, #be123c, #f43f5e)';
 }
 
@@ -29,7 +29,7 @@ export default function ChannelCard({ channel, totalDays = 31 }) {
     pacePct = pct, expected = 0, delta = 0,
     lastSameDays = null, vsLastPct = null,
     daily = [], prevDailySlice = null,
-    adSpend = null, adTracked = false,
+    adSpend = null, adRoas = null, adTracked = false,
   } = channel;
   const color = getPctColor(pacePct);
   const label = getPctLabel(pacePct);
@@ -39,8 +39,8 @@ export default function ChannelCard({ channel, totalDays = 31 }) {
   const vsColor = vsLastPct === null || vsLastPct === undefined
     ? '#94a3b8'
     : vsLastPct > 0 ? '#22c55e'
-    : vsLastPct < 0 ? '#f43f5e'
-    : '#94a3b8';
+      : vsLastPct < 0 ? '#f43f5e'
+        : '#94a3b8';
 
   // Chart geometry
   const N = prevDailySlice ? prevDailySlice.length : 0;
@@ -71,13 +71,12 @@ export default function ChannelCard({ channel, totalDays = 31 }) {
           : pacePct < 50
             ? 'rgba(244, 63, 94, 0.04)'
             : 'rgba(10, 22, 40, 0.85)',
-        border: `1px solid ${
-          pacePct >= 100 ? 'rgba(34,197,94,0.25)'
+        border: `1px solid ${pacePct >= 100 ? 'rgba(34,197,94,0.25)'
           : pacePct < 50 ? 'rgba(244,63,94,0.2)'
-          : 'rgba(26,45,69,0.8)'}`,
+            : 'rgba(26,45,69,0.8)'}`,
         boxShadow: pacePct >= 100 ? '0 0 16px rgba(34,197,94,0.08)'
           : pacePct < 50 ? '0 0 12px rgba(244,63,94,0.06)'
-          : 'none',
+            : 'none',
       }}
     >
       {/* Header */}
@@ -203,18 +202,34 @@ export default function ChannelCard({ channel, totalDays = 31 }) {
           ) : <span />}
           <div className="flex items-center gap-2 whitespace-nowrap">
             {adSpend !== null && adSpend > 0 ? (
-              <span
-                className="font-black text-[10px] px-2 py-0.5 rounded-md tracking-wider"
-                style={{
-                  background: 'rgba(250,204,21,0.18)',
-                  color: '#fde047',
-                  border: '1px solid rgba(250,204,21,0.55)',
-                  textShadow: '0 0 6px rgba(250,204,21,0.45)',
-                  boxShadow: '0 0 10px rgba(250,204,21,0.18)',
-                }}
-              >
-                AD {formatINR(adSpend)}
-              </span>
+              <>
+                <span
+                  className="font-black text-[10px] px-2 py-0.5 rounded-md tracking-wider"
+                  style={{
+                    background: 'rgba(250,204,21,0.18)',
+                    color: '#fde047',
+                    border: '1px solid rgba(250,204,21,0.55)',
+                    textShadow: '0 0 6px rgba(250,204,21,0.45)',
+                    boxShadow: '0 0 10px rgba(250,204,21,0.18)',
+                  }}
+                >
+                  AD {formatINR(adSpend)}
+                </span>
+                <span
+                  className="font-black text-[10px] px-2 py-0.5 rounded-md tracking-wider"
+                  style={{
+                    background: 'rgba(168,85,247,0.18)',
+                    color: '#d8b4fe',
+                    border: '1px solid rgba(168,85,247,0.55)',
+                    textShadow: adRoas !== null && adRoas > 0 ? '0 0 6px rgba(168,85,247,0.45)' : 'none',
+                    boxShadow: adRoas !== null && adRoas > 0 ? '0 0 10px rgba(168,85,247,0.18)' : 'none',
+                    opacity: adRoas !== null && adRoas > 0 ? 1 : 0.6,
+                  }}
+                  title="Return on Ad Spend"
+                >
+                  Ad ROAS : {adRoas !== null && adRoas > 0 ? adRoas.toFixed(1) : '—'}
+                </span>
+              </>
             ) : adTracked ? (
               <span
                 className="font-bold text-[9px] px-1.5 py-0.5 rounded-md tracking-wider"

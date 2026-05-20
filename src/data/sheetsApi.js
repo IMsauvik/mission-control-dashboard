@@ -78,14 +78,17 @@ async function fetchSheetRows(sheetName, spreadsheetId = SPREADSHEET_ID, range =
 //                                  cell directly. Use when the sheet keeps the
 //                                  pre-computed total in a header cell.
 const AD_SPEND_SOURCES = [
-  { spreadsheetId: AD_SPEND_SHEET_ID,     channel: 'Amazon (SC & VC)',   tab: 'AZ' },
-  { spreadsheetId: AD_SPEND_SHEET_ID,     channel: 'Flipkart',           tab: 'FK' },
-  { spreadsheetId: AD_SPEND_SHEET_ID,     channel: 'Blinkit',            tab: 'Blinkit' },
-  { spreadsheetId: AD_SPEND_SHEET_ID,     channel: 'Myntra',             tab: 'Myntra' },
+  { spreadsheetId: AD_SPEND_SHEET_ID,     channel: 'Amazon (SC & VC)',   tab: 'AZ',         cell: 'F1', roasCell: 'L1' },
+  { spreadsheetId: AD_SPEND_SHEET_ID,     channel: 'Flipkart',           tab: 'FK',         cell: 'F1', roasCell: 'L1' },
+  { spreadsheetId: AD_SPEND_SHEET_ID,     channel: 'Blinkit',            tab: 'Blinkit',    cell: 'F1', roasCell: 'L1' },
+  { spreadsheetId: AD_SPEND_SHEET_ID,     channel: 'Myntra',             tab: 'Myntra',     cell: 'F1', roasCell: 'L1' },
+  { spreadsheetId: AD_SPEND_SHEET_ID,     channel: 'Instamart',          tab: 'Instamart',  cell: 'F1', roasCell: 'L1' },
+  { spreadsheetId: AD_SPEND_SHEET_ID,     channel: 'Bigbasket',          tab: 'Big Basket', cell: 'F1', roasCell: 'L1' },
   {
     spreadsheetId: D2C_AD_SPEND_SHEET_ID,
     channel: 'D2C Website & Bulk',
     tabFor: (meta) => `${LONG_MONTH_NAMES[meta.month]}'${String(meta.year).slice(-2)}`,
+    roasCell: 'L1',
   },
   {
     spreadsheetId: MEESHO_AD_SPEND_SHEET_ID,
@@ -105,8 +108,15 @@ async function fetchAdSpendForSource(src, meta) {
   // Single-cell mode (e.g. Meesho's B1 pre-computed total).
   if (src.cell) {
     try {
-      const rows = await fetchSheetRows(tab, src.spreadsheetId, src.cell);
-      return parseNum(rows[0]?.[0]);
+      const [spendRows, roasRows] = await Promise.all([
+        fetchSheetRows(tab, src.spreadsheetId, src.cell),
+        src.roasCell
+          ? fetchSheetRows(tab, src.spreadsheetId, src.roasCell).catch(() => null)
+          : Promise.resolve(null),
+      ]);
+      const spend = parseNum(spendRows[0]?.[0]);
+      const roas = roasRows ? parseNum(roasRows[0]?.[0]) : null;
+      return { spend, roas: roas && roas > 0 ? roas : null };
     } catch (err) {
       console.warn(`[AdSpend ${src.channel}/${tab}!${src.cell}]`, err.message);
       return null;
@@ -126,7 +136,17 @@ async function fetchAdSpendForSource(src, meta) {
       if (match[1].toLowerCase() !== monthShort) continue;
       sum += parseNum(rows[i][5]); // Column F = "Spends Ach"
     }
-    return sum;
+    let roas = null;
+    if (src.roasCell) {
+      try {
+        const roasRows = await fetchSheetRows(tab, src.spreadsheetId, src.roasCell);
+        const v = parseNum(roasRows[0]?.[0]);
+        if (v > 0) roas = v;
+      } catch {
+        // leave null
+      }
+    }
+    return { spend: sum, roas };
   } catch (err) {
     console.warn(`[AdSpend ${src.channel}/${tab}]`, err.message);
     return null;
@@ -136,13 +156,13 @@ async function fetchAdSpendForSource(src, meta) {
 async function fetchAdSpendForMonth(meta) {
   const entries = await Promise.all(
     AD_SPEND_SOURCES.map(async (src) => {
-      const sum = await fetchAdSpendForSource(src, meta);
-      return [src.channel, sum];
+      const result = await fetchAdSpendForSource(src, meta);
+      return [src.channel, result];
     })
   );
   const out = new Map();
-  for (const [name, sum] of entries) {
-    if (sum !== null && sum > 0) out.set(name, sum);
+  for (const [name, result] of entries) {
+    if (result && result.spend > 0) out.set(name, result);
   }
   return out;
 }
@@ -317,7 +337,9 @@ export async function fetchAllSalesData() {
 
   const adSpendByName = await fetchAdSpendForMonth(current.meta);
   for (const ch of current.channels) {
-    ch.adSpend = adSpendByName.get(ch.name) ?? null;
+    const entry = adSpendByName.get(ch.name);
+    ch.adSpend = entry?.spend ?? null;
+    ch.adRoas = entry?.roas ?? null;
     ch.adTracked = AD_TRACKED_CHANNELS.has(ch.name);
   }
 

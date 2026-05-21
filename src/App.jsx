@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import Header from './components/Header.jsx';
 import KPICard from './components/KPICard.jsx';
 import AchievementCard from './components/AchievementCard.jsx';
@@ -7,12 +8,16 @@ import DailyChart from './components/DailyChart.jsx';
 import ChannelGrid from './components/ChannelGrid.jsx';
 import ChannelPieChart from './components/ChannelPieChart.jsx';
 import VideoCard from './components/VideoCard.jsx';
+import ChannelGrowthPage from './growth/ChannelGrowthPage.jsx';
 import { useSalesData } from './hooks/useSalesData.js';
+import { useGrowthData } from './growth/useGrowthData.js';
 import { useKioskMode } from './hooks/useKioskMode.js';
 import { formatINR } from './data/salesData.js';
 
 export default function App() {
   const { data, syncing, error } = useSalesData();
+  const { data: growthData, loading: growthLoading, error: growthError } = useGrowthData();
+  const [view, setView] = useState('mission');
   useKioskMode();
 
   if (!data) {
@@ -69,9 +74,20 @@ export default function App() {
 
       {/* Header */}
       <div style={{ animation: 'fadeInUp 0.4s ease-out 0ms both' }}>
-        <Header currentMonthLabel={currentMonthLabel} daysDone={daysDone} totalDays={totalDays} />
+        <Header
+          currentMonthLabel={currentMonthLabel}
+          daysDone={daysDone}
+          totalDays={totalDays}
+          view={view}
+          onToggleView={() => setView((v) => (v === 'mission' ? 'growth' : 'mission'))}
+          growthRange={growthData?.rangeLabel}
+        />
       </div>
 
+      {view === 'growth' ? (
+        <ChannelGrowthPage data={growthData} loading={growthLoading} error={growthError} />
+      ) : (
+      <>
       {/* KPI Row */}
       <div
         className="flex-none grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 lg:h-[96px]"
@@ -155,6 +171,8 @@ export default function App() {
           videoSlot={<VideoCard />}
         />
       </div>
+      </>
+      )}
     </div>
   );
 }

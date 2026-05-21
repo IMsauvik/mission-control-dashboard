@@ -33,11 +33,11 @@ export default function AllChannelsChart({ data }) {
         <span className="text-[11px] font-bold tracking-widest uppercase text-[#94a3b8]">
           Channel Revenue — All Channels
         </span>
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-4 flex-wrap">
           {CHANNELS.map((ch) => (
-            <div key={ch.key} className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-sm" style={{ background: ch.color }} />
-              <span className="text-[11px] text-[#94a3b8]">{ch.key}</span>
+            <div key={ch.key} className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded" style={{ background: ch.color }} />
+              <span className="text-sm sm:text-base font-semibold text-[#cbd5e1]">{ch.key}</span>
             </div>
           ))}
         </div>

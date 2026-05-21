@@ -16,7 +16,7 @@ export default function ChannelGrowthBlock({ channel, analysis }) {
       <div>
         <div className="flex items-center gap-2.5 flex-wrap">
           <div className="w-3.5 h-3.5 lg:w-4 lg:h-4 rounded" style={{ background: channel.color }} />
-          <span className="text-lg lg:text-2xl font-black text-white">{channel.key}</span>
+          <span className="text-lg lg:text-2xl font-black" style={{ color: channel.color }}>{channel.key}</span>
           <span className="text-2xl lg:text-4xl font-black ml-auto" style={{ color: overallColor }}>
             {dirArrow(analysis.overallDir)} {formatPct(analysis.overallPct)}
           </span>

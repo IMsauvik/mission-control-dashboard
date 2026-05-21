@@ -81,7 +81,7 @@ const AD_SPEND_SOURCES = [
   { spreadsheetId: AD_SPEND_SHEET_ID,     channel: 'Amazon (SC & VC)',   tab: 'AZ',         cell: 'F1', roasCell: 'L1' },
   { spreadsheetId: AD_SPEND_SHEET_ID,     channel: 'Flipkart',           tab: 'FK',         cell: 'F1', roasCell: 'L1' },
   { spreadsheetId: AD_SPEND_SHEET_ID,     channel: 'Blinkit',            tab: 'Blinkit',    cell: 'F1', roasCell: 'L1' },
-  { spreadsheetId: AD_SPEND_SHEET_ID,     channel: 'Myntra',             tab: 'Myntra',     cell: 'F1', roasCell: 'L1' },
+  { spreadsheetId: AD_SPEND_SHEET_ID,     channel: 'Myntra (incl. SJIT)', tab: 'Myntra',    cell: 'F1', roasCell: 'L1' },
   { spreadsheetId: AD_SPEND_SHEET_ID,     channel: 'Instamart',          tab: 'Instamart',  cell: 'F1', roasCell: 'L1' },
   { spreadsheetId: AD_SPEND_SHEET_ID,     channel: 'Bigbasket',          tab: 'Big Basket', cell: 'F1', roasCell: 'L1' },
   {
@@ -231,6 +231,18 @@ function parseSheet(rows, meta) {
     meesho.pct = meesho.target > 0 ? Math.round((meesho.actual / meesho.target) * 100) : 0;
     meesho.daily = meesho.daily.map((v, i) => v + (meeshob2b.daily[i] || 0));
     channels.splice(channels.indexOf(meeshob2b), 1);
+  }
+
+  // Merge Myntra + Myntra SJIT into one combined card (sum daily arrays element-wise)
+  const myntra = channels.find(c => c.name.toLowerCase() === 'myntra');
+  const myntraSjit = channels.find(c => c.name.toLowerCase() === 'myntra sjit');
+  if (myntra && myntraSjit) {
+    myntra.name = 'Myntra (incl. SJIT)';
+    myntra.target += myntraSjit.target;
+    myntra.actual += myntraSjit.actual;
+    myntra.pct = myntra.target > 0 ? Math.round((myntra.actual / myntra.target) * 100) : 0;
+    myntra.daily = myntra.daily.map((v, i) => v + (myntraSjit.daily[i] || 0));
+    channels.splice(channels.indexOf(myntraSjit), 1);
   }
 
   // Merge RK World + Clicktech + Amazon SC → Amazon (SC & VC)

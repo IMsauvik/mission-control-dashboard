@@ -233,16 +233,20 @@ function parseSheet(rows, meta) {
     channels.splice(channels.indexOf(meeshob2b), 1);
   }
 
-  // Merge Myntra + Myntra SJIT into one combined card (sum daily arrays element-wise)
+  // Merge Myntra + Myntra SJIT into one combined card (sum daily arrays element-wise).
+  // SJIT is a newer column, so older months may lack it — still rename Myntra to the
+  // combined label so month-over-month comparison matches by name.
   const myntra = channels.find(c => c.name.toLowerCase() === 'myntra');
   const myntraSjit = channels.find(c => c.name.toLowerCase() === 'myntra sjit');
-  if (myntra && myntraSjit) {
+  if (myntra) {
     myntra.name = 'Myntra (incl. SJIT)';
-    myntra.target += myntraSjit.target;
-    myntra.actual += myntraSjit.actual;
-    myntra.pct = myntra.target > 0 ? Math.round((myntra.actual / myntra.target) * 100) : 0;
-    myntra.daily = myntra.daily.map((v, i) => v + (myntraSjit.daily[i] || 0));
-    channels.splice(channels.indexOf(myntraSjit), 1);
+    if (myntraSjit) {
+      myntra.target += myntraSjit.target;
+      myntra.actual += myntraSjit.actual;
+      myntra.pct = myntra.target > 0 ? Math.round((myntra.actual / myntra.target) * 100) : 0;
+      myntra.daily = myntra.daily.map((v, i) => v + (myntraSjit.daily[i] || 0));
+      channels.splice(channels.indexOf(myntraSjit), 1);
+    }
   }
 
   // Merge RK World + Clicktech + Amazon SC → Amazon (SC & VC)

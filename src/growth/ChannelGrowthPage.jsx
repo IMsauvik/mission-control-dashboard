@@ -47,13 +47,13 @@ export default function ChannelGrowthPage({ data, loading, error }) {
 
   return (
     <main
-      className="relative flex-1 grid grid-cols-1 lg:grid-cols-5 gap-3 min-h-0"
+      className="relative flex-1 grid grid-cols-1 lg:grid-cols-2 gap-3 min-h-0"
       style={{ animation: 'fadeInUp 0.4s ease-out 120ms both' }}
     >
-      <div className="lg:col-span-3 h-[340px] lg:h-auto lg:min-h-0">
+      <div className="h-[340px] lg:h-auto lg:min-h-0">
         <AllChannelsChart data={view.chartData} />
       </div>
-      <div className="lg:col-span-2 flex flex-col gap-2.5 lg:min-h-0">
+      <div className="flex flex-col gap-2.5 lg:min-h-0">
         {view.blocks.map(({ channel, analysis }) => (
           <ChannelGrowthBlock key={channel.key} channel={channel} analysis={analysis} />
         ))}

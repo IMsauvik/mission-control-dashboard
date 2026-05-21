@@ -3,6 +3,7 @@ import { CHANNELS } from './growthApi.js';
 import { analyzeChannel } from './analysis.js';
 import AllChannelsChart from './AllChannelsChart.jsx';
 import ChannelGrowthBlock from './ChannelGrowthBlock.jsx';
+import VideoCard from '../components/VideoCard.jsx';
 
 // Body of the Channel Growth page. The shared mission-control <Header> is rendered by App;
 // this component is just the chart + per-channel stack. Receives the growth data (lifted to
@@ -46,7 +47,7 @@ export default function ChannelGrowthPage({ data, loading, error }) {
 
   return (
     <main
-      className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-3 min-h-0"
+      className="relative flex-1 grid grid-cols-1 lg:grid-cols-5 gap-3 min-h-0"
       style={{ animation: 'fadeInUp 0.4s ease-out 120ms both' }}
     >
       <div className="lg:col-span-3 h-[340px] lg:h-auto lg:min-h-0">
@@ -56,6 +57,23 @@ export default function ChannelGrowthPage({ data, loading, error }) {
         {view.blocks.map(({ channel, analysis }) => (
           <ChannelGrowthBlock key={channel.key} channel={channel} analysis={analysis} />
         ))}
+      </div>
+
+      {/* Tiny floating video — keeps the TV awake (no input = sleep mode) */}
+      <div
+        className="absolute bottom-1 right-1 hidden lg:block"
+        style={{
+          width: 150,
+          height: 84,
+          borderRadius: 8,
+          overflow: 'hidden',
+          border: '1px solid rgba(34,197,94,0.2)',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+          opacity: 0.85,
+          zIndex: -10,
+        }}
+      >
+        <VideoCard />
       </div>
     </main>
   );

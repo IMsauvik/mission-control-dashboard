@@ -39,14 +39,14 @@ export default function ChannelGrid({ channelData, currentMonthLabel, daysDone, 
           <div
             className="absolute bottom-0 right-0 hidden lg:block"
             style={{
-              width: 'calc(15% - 4px)',
-              height: 'calc(13% - 2px)',
+              width: 150,
+              height: 84,
               borderRadius: 8,
               overflow: 'hidden',
               border: '1px solid rgba(34,197,94,0.2)',
               boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
               opacity: 0.85,
-              zIndex: 10,
+              zIndex: -10,
             }}
           >
             {videoSlot}

@@ -18,6 +18,13 @@ export function formatINRShort(amount) {
   return `${sign}₹${(v / 1000).toFixed(0)}K`;
 }
 
+// ₹ Crore label, e.g. "₹3.38 Cr". Input is already in Crore.
+export function formatCr(cr) {
+  if (cr === null || cr === undefined || !isFinite(cr)) return '—';
+  const sign = cr < 0 ? '-' : '';
+  return `${sign}₹${Math.abs(cr).toFixed(2)} Cr`;
+}
+
 // Signed percentage label, e.g. "+222%" / "-28%".
 export function formatPct(pct) {
   if (pct === null || pct === undefined || !isFinite(pct)) return '—';

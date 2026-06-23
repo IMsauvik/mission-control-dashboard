@@ -1,9 +1,9 @@
+import { listSheets as listSheetsShared, fetchSheetValues } from './sheetsClient.js';
+
 const SPREADSHEET_ID = import.meta.env.VITE_SPREADSHEET_ID;
 const AD_SPEND_SHEET_ID = import.meta.env.VITE_AD_SPEND_SPREADSHEET_ID;
 const D2C_AD_SPEND_SHEET_ID = import.meta.env.VITE_D2C_AD_SPEND_SPREADSHEET_ID;
 const MEESHO_AD_SPEND_SHEET_ID = import.meta.env.VITE_MEESHO_AD_SPEND_SPREADSHEET_ID;
-const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
-const BASE = 'https://sheets.googleapis.com/v4/spreadsheets';
 
 const MONTH_MAP = {
   jan: 0, january: 0,
@@ -48,24 +48,10 @@ function parseNum(val) {
   return isNaN(n) ? 0 : n;
 }
 
-async function listSheets() {
-  if (!API_KEY) throw new Error('VITE_GOOGLE_API_KEY not configured');
-  if (!SPREADSHEET_ID) throw new Error('VITE_SPREADSHEET_ID not configured');
-  const res = await fetch(`${BASE}/${SPREADSHEET_ID}?fields=sheets.properties.title&key=${API_KEY}`);
-  if (!res.ok) throw new Error(`Sheets API ${res.status}`);
-  const data = await res.json();
-  return data.sheets.map(s => s.properties.title);
-}
+const listSheets = () => listSheetsShared(SPREADSHEET_ID);
 
-async function fetchSheetRows(sheetName, spreadsheetId = SPREADSHEET_ID, range = 'A1:Z65') {
-  if (!API_KEY) throw new Error('VITE_GOOGLE_API_KEY not configured');
-  if (!spreadsheetId) throw new Error('Spreadsheet ID not configured');
-  const encoded = encodeURIComponent(`'${sheetName}'!${range}`);
-  const res = await fetch(`${BASE}/${spreadsheetId}/values/${encoded}?key=${API_KEY}`);
-  if (!res.ok) throw new Error(`Range fetch ${res.status} for "${sheetName}"`);
-  const data = await res.json();
-  return data.values || [];
-}
+const fetchSheetRows = (sheetName, spreadsheetId = SPREADSHEET_ID, range = 'A1:Z65') =>
+  fetchSheetValues(sheetName, spreadsheetId, range);
 
 // Ad-spend sources. Each entry says: which DSR-side channel name to populate,
 // which spreadsheet to fetch, and how to extract the spend total.

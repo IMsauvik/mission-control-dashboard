@@ -1,8 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { fetchAllSalesData } from '../data/sheetsApi.js';
 
-const REFRESH_MS = 5 * 60 * 1000;
-const MAX_FAILURES = 12; // ~1 hour of consecutive failures → reload page
+// Data changes only a handful of times a day, so poll hourly. For an immediate update
+// after a sheet edit, use the manual refresh (Imeco logo) which clears the cache and refetches.
+const REFRESH_MS = 60 * 60 * 1000;
+const MAX_FAILURES = 12; // ~12 hours of consecutive failures → reload page
 
 export function useSalesData() {
   const [data, setData] = useState(null);
@@ -11,7 +13,7 @@ export function useSalesData() {
   const failureCount = useRef(0);
   const lastGoodData = useRef(null);
 
-  async function load() {
+  const load = useCallback(async () => {
     setSyncing(true);
     try {
       const result = await fetchAllSalesData();
@@ -29,13 +31,13 @@ export function useSalesData() {
     } finally {
       setSyncing(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
     load();
     const id = setInterval(load, REFRESH_MS);
     return () => clearInterval(id);
-  }, []);
+  }, [load]);
 
-  return { data, syncing, error };
+  return { data, syncing, error, refresh: load };
 }

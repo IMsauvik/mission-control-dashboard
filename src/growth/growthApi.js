@@ -7,9 +7,9 @@
 //   - the row DIRECTLY ABOVE it is the per-channel monthly "Total Sales" row
 // We read those two rows and ignore everything else (targets, daily rows, pace).
 
+import { listSheets as listSheetsShared, fetchSheetValues } from '../data/sheetsClient.js';
+
 const SPREADSHEET_ID = import.meta.env.VITE_SPREADSHEET_ID;
-const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
-const BASE = 'https://sheets.googleapis.com/v4/spreadsheets';
 
 const MONTH_MAP = {
   jan: 0, january: 0,
@@ -72,22 +72,10 @@ function parseNum(val) {
   return isNaN(n) ? 0 : n;
 }
 
-async function listSheets() {
-  if (!API_KEY) throw new Error('VITE_GOOGLE_API_KEY not configured');
-  if (!SPREADSHEET_ID) throw new Error('VITE_SPREADSHEET_ID not configured');
-  const res = await fetch(`${BASE}/${SPREADSHEET_ID}?fields=sheets.properties.title&key=${API_KEY}`);
-  if (!res.ok) throw new Error(`Sheets API ${res.status}`);
-  const data = await res.json();
-  return data.sheets.map((s) => s.properties.title);
-}
+const listSheets = () => listSheetsShared(SPREADSHEET_ID);
 
-async function fetchSheetRows(sheetName, range = 'A1:Z65') {
-  const encoded = encodeURIComponent(`'${sheetName}'!${range}`);
-  const res = await fetch(`${BASE}/${SPREADSHEET_ID}/values/${encoded}?key=${API_KEY}`);
-  if (!res.ok) throw new Error(`Range fetch ${res.status} for "${sheetName}"`);
-  const data = await res.json();
-  return data.values || [];
-}
+const fetchSheetRows = (sheetName, range = 'A1:Z65') =>
+  fetchSheetValues(sheetName, SPREADSHEET_ID, range);
 
 const HEADER_LABELS = new Set(['date', 'daily gross sales']);
 

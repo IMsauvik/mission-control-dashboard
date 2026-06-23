@@ -1,14 +1,27 @@
 import LiveClock from './LiveClock.jsx';
 import logo from '../../assets/imeco_logo_white.png';
 
-export default function Header({ currentMonthLabel, daysDone, totalDays, view = 'mission', onToggleView, growthRange }) {
+export default function Header({ currentMonthLabel, daysDone, totalDays, view = 'mission', onToggleView, growthRange, onRefresh, syncing = false }) {
   const isGrowth = view === 'growth';
 
   return (
     <header className="flex-none flex flex-col items-center gap-2 px-4 py-2.5 card-glass border-b border-[#1a2d45] sm:flex-row sm:flex-wrap sm:justify-between">
       {/* Logo + Brand + Nav */}
       <div className="flex items-center gap-3 w-full justify-between sm:w-auto sm:justify-start">
-        <img src={logo} alt="Imeco" className="h-7 sm:h-8 w-auto" />
+        <button
+          type="button"
+          onClick={onRefresh}
+          disabled={!onRefresh || syncing}
+          title="Refresh data from the sheet"
+          aria-label="Refresh dashboard data"
+          className="shrink-0 rounded-md transition-transform hover:scale-105 active:scale-95 disabled:cursor-wait focus:outline-none focus:ring-2 focus:ring-[#22c55e]/40"
+        >
+          <img
+            src={logo}
+            alt="Imeco"
+            className={`h-7 sm:h-8 w-auto ${syncing ? 'animate-pulse' : ''}`}
+          />
+        </button>
         <div className="w-px h-7 bg-[#1a2d45] hidden sm:block" />
         <div className="hidden md:block">
           <div className="text-[11px] text-[#94a3b8] font-medium uppercase tracking-widest leading-none">

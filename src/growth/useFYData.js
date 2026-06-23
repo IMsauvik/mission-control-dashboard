@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { fetchFYPerformance } from './growthApi.js';
 
-// Same polling cadence as useGrowthData — a new completed month tab is picked up automatically.
-const REFRESH_MS = 30 * 60 * 1000;
+// Same hourly cadence as useGrowthData — a new completed month tab is picked up automatically.
+// For an instant update after a sheet edit, use the manual refresh (Imeco logo).
+const REFRESH_MS = 60 * 60 * 1000;
 
 export function useFYData() {
   const [data, setData] = useState(null);
@@ -10,30 +11,26 @@ export function useFYData() {
   const [error, setError] = useState(null);
   const lastGood = useRef(null);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      try {
-        const result = await fetchFYPerformance();
-        if (cancelled) return;
-        lastGood.current = result;
-        setData(result);
-        setError(null);
-      } catch (err) {
-        console.error('[FYData]', err.message);
-        if (cancelled) return;
-        setError(err.message);
-        if (lastGood.current) setData(lastGood.current);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+  const load = useCallback(async () => {
+    try {
+      const result = await fetchFYPerformance();
+      lastGood.current = result;
+      setData(result);
+      setError(null);
+    } catch (err) {
+      console.error('[FYData]', err.message);
+      setError(err.message);
+      if (lastGood.current) setData(lastGood.current);
+    } finally {
+      setLoading(false);
     }
-
-    load();
-    const id = setInterval(load, REFRESH_MS);
-    return () => { cancelled = true; clearInterval(id); };
   }, []);
 
-  return { data, loading, error };
+  useEffect(() => {
+    load();
+    const id = setInterval(load, REFRESH_MS);
+    return () => clearInterval(id);
+  }, [load]);
+
+  return { data, loading, error, refresh: load };
 }

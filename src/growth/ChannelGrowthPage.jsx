@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { CHANNELS } from './growthApi.js';
 import { analyzeChannel } from './analysis.js';
-import { useFYData } from './useFYData.js';
 import { FY_ANNUAL_TARGET_CR, FY_MONTHLY_TARGETS, FY_CHANNEL_TARGETS } from './fyTargets.js';
 import { formatCr, formatPct, UP_COLOR, DOWN_COLOR } from './format.js';
 import AllChannelsChart from './AllChannelsChart.jsx';
@@ -27,10 +26,9 @@ function KpiTile({ label, value, valueColor = '#f1f5f9', sub }) {
 // Body of the Channel Growth page. The shared mission-control <Header> is rendered by App.
 // One screen, no sub-tabs: a top FY-target KPI strip, the 6-month trend line chart with the
 // FY monthly target-vs-achieved chart stacked beneath it, and the per-channel cards (each with
-// an FY 26-27 target progress bar). Trend data is lifted from App; FY data is fetched here.
-export default function ChannelGrowthPage({ data, loading, error }) {
-  const { data: fy } = useFYData();
-
+// an FY 26-27 target progress bar). Both trend data and FY data are lifted from App and passed
+// in as props, so no API call is tied to this page mounting (it auto-rotates every 2 min).
+export default function ChannelGrowthPage({ data, loading, error, fy }) {
   const view = useMemo(() => {
     if (!data) return null;
     const chartData = data.months.map((month, i) => {

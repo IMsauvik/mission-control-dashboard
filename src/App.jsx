@@ -36,8 +36,8 @@ export default function App() {
   // Keyed on `view` so each change — auto or a manual header toggle — restarts
   // the countdown, avoiding a jarring instant flip right after a manual press.
   useEffect(() => {
-    // const ROTATE_MS = 2 * 60 * 1000;
-    const ROTATE_MS = 15 * 1000;
+    const ROTATE_MS = 2 * 60 * 1000;
+    // const ROTATE_MS = 15 * 1000;
     const id = setTimeout(
       () => setView((v) => (v === 'mission' ? 'growth' : 'mission')),
       ROTATE_MS
@@ -113,95 +113,95 @@ export default function App() {
 
       {/* Active tab — switches instantly between the two views. */}
       <div className="flex-1 min-h-0 flex flex-col gap-2">
-            {view === 'growth' ? (
-              <ChannelGrowthPage data={growthData} loading={growthLoading} error={growthError} fy={fyData} />
-            ) : (
-              <>
-                {/* KPI Row */}
-                <div
-                  className="flex-none grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 lg:h-[96px]"
-                  style={{ animation: 'fadeInUp 0.4s ease-out 80ms both' }}
-                >
-                  <KPICard
-                    label="MTD Revenue"
-                    value={formatINR(currentMTD)}
-                    sub={`${daysLeft} days remaining`}
-                    badge={currentMonthLabel.toUpperCase()}
-                    badgeColor="#22c55e"
-                    accent="#22c55e"
-                    cornerBadge={vsLastMoLabel}
-                    cornerColor={vsLastMoColor}
-                  />
-                  <KPICard
-                    label="Monthly Target"
-                    value={formatINR(currentTarget)}
-                    sub={`Daily need: ${formatINR(dailyTarget)}`}
-                    badge="TARGET"
-                    badgeColor="#f59e0b"
-                  />
-                  <AchievementCard
-                    achievement={`${achievement}%`}
-                    daysDone={daysDone}
-                    totalDays={totalDays}
-                    dailyData={dailyData}
-                    currentTarget={currentTarget}
-                  />
-                  <KPICard
-                    label="Daily Avg Pace"
-                    value={formatINR(dailyAvg)}
-                    sub={`Need ${formatINR(Math.max(0, dailyTarget - dailyAvg))} more/day`}
-                    badge="PACE"
-                    badgeColor={dailyAvg >= dailyTarget ? '#22c55e' : '#fb923c'}
-                    accent={dailyAvg >= dailyTarget ? '#22c55e' : '#f1f5f9'}
-                  />
-                  <KPICard
-                    label={`${monthShort} Projection`}
-                    value={formatINR(projectedMTD)}
-                    sub={`vs ${formatINR(currentTarget)} target`}
-                    badge={projectedMTD >= currentTarget ? 'WILL HIT' : 'SHORTFALL'}
-                    badgeColor={projectedMTD >= currentTarget ? '#22c55e' : '#ef4444'}
-                  />
-                </div>
+        {view === 'growth' ? (
+          <ChannelGrowthPage data={growthData} loading={growthLoading} error={growthError} fy={fyData} />
+        ) : (
+          <>
+            {/* KPI Row */}
+            <div
+              className="flex-none grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 lg:h-[96px]"
+              style={{ animation: 'fadeInUp 0.4s ease-out 80ms both' }}
+            >
+              <KPICard
+                label="MTD Revenue"
+                value={formatINR(currentMTD)}
+                sub={`${daysLeft} days remaining`}
+                badge={currentMonthLabel.toUpperCase()}
+                badgeColor="#22c55e"
+                accent="#22c55e"
+                cornerBadge={vsLastMoLabel}
+                cornerColor={vsLastMoColor}
+              />
+              <KPICard
+                label="Monthly Target"
+                value={formatINR(currentTarget)}
+                sub={`Daily need: ${formatINR(dailyTarget)}`}
+                badge="TARGET"
+                badgeColor="#f59e0b"
+              />
+              <AchievementCard
+                achievement={`${achievement}%`}
+                daysDone={daysDone}
+                totalDays={totalDays}
+                dailyData={dailyData}
+                currentTarget={currentTarget}
+              />
+              <KPICard
+                label="Daily Avg Pace"
+                value={formatINR(dailyAvg)}
+                sub={`Need ${formatINR(Math.max(0, dailyTarget - dailyAvg))} more/day`}
+                badge="PACE"
+                badgeColor={dailyAvg >= dailyTarget ? '#22c55e' : '#fb923c'}
+                accent={dailyAvg >= dailyTarget ? '#22c55e' : '#f1f5f9'}
+              />
+              <KPICard
+                label={`${monthShort} Projection`}
+                value={formatINR(projectedMTD)}
+                sub={`vs ${formatINR(currentTarget)} target`}
+                badge={projectedMTD >= currentTarget ? 'WILL HIT' : 'SHORTFALL'}
+                badgeColor={projectedMTD >= currentTarget ? '#22c55e' : '#ef4444'}
+              />
+            </div>
 
-                {/* Charts Row — DailyChart gets 2 cols, VideoCard removed (now floating) */}
-                <div
-                  className="flex-none grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2"
-                  style={{ animation: 'fadeInUp 0.4s ease-out 180ms both' }}
-                >
-                  <div className="col-span-1 sm:col-span-2 lg:col-span-3 h-[220px] lg:h-[260px]">
-                    <MonthlyChart monthlyData={monthlyData} />
-                  </div>
-                  <div className="col-span-1 sm:col-span-2 lg:col-span-2 h-[220px] lg:h-[260px]">
-                    <DailyChart
-                      dailyData={dailyData}
-                      dailyTarget={dailyTarget}
-                      monthShort={monthShort}
-                      daysDone={daysDone}
-                    />
-                  </div>
-                  <div className="col-span-1 h-[200px] lg:h-[260px]">
-                    <ChannelPieChart channelData={channelData} monthShort={monthShort} />
-                  </div>
-                  <div className="col-span-1 h-[200px] lg:h-[260px]">
-                    <MRRGauge mrrGoal={currentTarget} currentMRR={currentMTD} />
-                  </div>
-                </div>
+            {/* Charts Row — DailyChart gets 2 cols, VideoCard removed (now floating) */}
+            <div
+              className="flex-none grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2"
+              style={{ animation: 'fadeInUp 0.4s ease-out 180ms both' }}
+            >
+              <div className="col-span-1 sm:col-span-2 lg:col-span-3 h-[220px] lg:h-[260px]">
+                <MonthlyChart monthlyData={monthlyData} />
+              </div>
+              <div className="col-span-1 sm:col-span-2 lg:col-span-2 h-[220px] lg:h-[260px]">
+                <DailyChart
+                  dailyData={dailyData}
+                  dailyTarget={dailyTarget}
+                  monthShort={monthShort}
+                  daysDone={daysDone}
+                />
+              </div>
+              <div className="col-span-1 h-[200px] lg:h-[260px]">
+                <ChannelPieChart channelData={channelData} monthShort={monthShort} />
+              </div>
+              <div className="col-span-1 h-[200px] lg:h-[260px]">
+                <MRRGauge mrrGoal={currentTarget} currentMRR={currentMTD} />
+              </div>
+            </div>
 
-                {/* Channel Grid */}
-                <div
-                  className="flex-1 min-h-0 lg:min-h-0"
-                  style={{ animation: 'fadeInUp 0.4s ease-out 280ms both' }}
-                >
-                  <ChannelGrid
-                    channelData={channelData}
-                    currentMonthLabel={currentMonthLabel}
-                    daysDone={daysDone}
-                    totalDays={totalDays}
-                    videoSlot={<VideoCard />}
-                  />
-                </div>
-              </>
-            )}
+            {/* Channel Grid */}
+            <div
+              className="flex-1 min-h-0 lg:min-h-0"
+              style={{ animation: 'fadeInUp 0.4s ease-out 280ms both' }}
+            >
+              <ChannelGrid
+                channelData={channelData}
+                currentMonthLabel={currentMonthLabel}
+                daysDone={daysDone}
+                totalDays={totalDays}
+                videoSlot={<VideoCard />}
+              />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -9,15 +9,15 @@ export const FY_MONTHLY_TARGETS = [
   { month: 'Apr', cr: 1.73 },
   { month: 'May', cr: 2 },
   { month: 'Jun', cr: 2.2 },
-  { month: 'Jul', cr: 3 },
+  { month: 'Jul', cr: 2.5 },
   { month: 'Aug', cr: 3.57 },
   { month: 'Sep', cr: 4.25 },
   { month: 'Oct', cr: 4.5 },
   { month: 'Nov', cr: 4.75 },
   { month: 'Dec', cr: 5.25 },
   { month: 'Jan', cr: 5.75 },
-  { month: 'Feb', cr: 6.25 },
-  { month: 'Mar', cr: 6.75 },
+  { month: 'Feb', cr: 6.5 },
+  { month: 'Mar', cr: 7 },
 ];
 
 export const FY_ANNUAL_TARGET_CR = FY_MONTHLY_TARGETS.reduce((s, m) => s + m.cr, 0); // 50

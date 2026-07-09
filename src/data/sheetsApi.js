@@ -337,13 +337,16 @@ export async function fetchAllSalesData() {
     ? lastComplete.dailyData.slice(0, N).reduce((s, d) => s + (d.revenue || 0), 0)
     : null;
 
-  const adSpendByName = await fetchAdSpendForMonth(current.meta);
-  for (const ch of current.channels) {
-    const entry = adSpendByName.get(ch.name);
-    ch.adSpend = entry?.spend ?? null;
-    ch.adRoas = entry?.roas ?? null;
-    ch.adTracked = AD_TRACKED_CHANNELS.has(ch.name);
-  }
+  // Ads data hidden for now — the badges it fed are commented out in
+  // src/components/ChannelCard.jsx. Skipping the fetch avoids the Sheets
+  // calls to the ad-spend spreadsheets on every refresh.
+  // const adSpendByName = await fetchAdSpendForMonth(current.meta);
+  // for (const ch of current.channels) {
+  //   const entry = adSpendByName.get(ch.name);
+  //   ch.adSpend = entry?.spend ?? null;
+  //   ch.adRoas = entry?.roas ?? null;
+  //   ch.adTracked = AD_TRACKED_CHANNELS.has(ch.name);
+  // }
 
   return {
     monthlyData: valid.map((m, i) => ({

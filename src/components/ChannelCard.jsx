@@ -29,7 +29,8 @@ export default function ChannelCard({ channel, totalDays = 31 }) {
     pacePct = pct, expected = 0, delta = 0,
     lastSameDays = null, vsLastPct = null,
     daily = [], prevDailySlice = null,
-    adSpend = null, adRoas = null, adTracked = false,
+    // Ads data hidden for now — re-enable with the badge block below.
+    // adSpend = null, adRoas = null, adTracked = false,
   } = channel;
   const color = getPctColor(pacePct);
   const label = getPctLabel(pacePct);
@@ -201,6 +202,9 @@ export default function ChannelCard({ channel, totalDays = 31 }) {
             </span>
           ) : <span />}
           <div className="flex items-center gap-2 whitespace-nowrap">
+            {/* Ads data hidden for now. Restoring this also needs the
+                `adSpend`/`adRoas`/`adTracked` destructure above and the
+                ad-spend fetch in src/data/sheetsApi.js.
             {adSpend !== null && adSpend > 0 ? (
               <>
                 <span
@@ -243,6 +247,7 @@ export default function ChannelCard({ channel, totalDays = 31 }) {
                 AD —
               </span>
             ) : null}
+            */}
             <span className="font-bold tracking-wider" style={{ color }}>
               {label}
             </span>

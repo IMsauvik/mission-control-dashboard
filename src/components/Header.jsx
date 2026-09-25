@@ -1,8 +1,20 @@
 import LiveClock from './LiveClock.jsx';
 import logo from '../../assets/imeco_logo_white.png';
+import { formatAgo } from '../data/salesData.js';
 
-export default function Header({ currentMonthLabel, daysDone, totalDays, view = 'mission', onToggleView, growthRange, onRefresh, syncing = false }) {
+export default function Header({
+  currentMonthLabel, daysDone, totalDays, view = 'mission', onToggleView,
+  growthRange, onRefresh, syncing = false,
+  scopes, activeKey, onSelectScope, error, fetchedAt,
+}) {
   const isGrowth = view === 'growth';
+  const syncLabel = error
+    ? `Cached — ${error}`
+    : syncing
+      ? 'Syncing'
+      : fetchedAt
+        ? `Synced ${formatAgo(fetchedAt)}`
+        : '—';
 
   return (
     <header className="flex-none flex flex-col items-center gap-2 px-4 py-2.5 card-glass border-b border-[#1a2d45] sm:flex-row sm:flex-wrap sm:justify-between">
@@ -59,6 +71,38 @@ export default function Header({ currentMonthLabel, daysDone, totalDays, view = 
 
       {/* Clock */}
       <LiveClock />
+
+      {/* Financial-year month filter chips */}
+      {!isGrowth && scopes && (
+        <div className="w-full flex items-center gap-3 pt-1 border-t border-[#1a2d45]/60">
+          <div className="flex items-center gap-1.5 flex-1 min-w-0 overflow-x-auto">
+            {scopes.map((s) => {
+              const active = s.key === activeKey;
+              return (
+                <button
+                  key={s.key}
+                  type="button"
+                  onClick={() => onSelectScope(s.key)}
+                  className={`shrink-0 flex items-baseline gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-black tracking-widest uppercase border transition-colors ${
+                    active
+                      ? 'bg-[#22c55e]/15 text-[#22c55e] border-[#22c55e]/40'
+                      : 'text-[#94a3b8] border-transparent hover:bg-white/5'
+                  }`}
+                >
+                  <span>{s.chipLabel}</span>
+                  <span className={`font-semibold normal-case ${active ? 'text-[#22c55e]/80' : 'text-[#64748b]'}`}>
+                    {s.hint}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <span className="hidden items-center gap-1.5 text-[11px] tracking-widest text-[#94a3b8] uppercase md:flex shrink-0">
+            <span className={syncing ? 'inline-block animate-spin' : 'inline-block'}>↻</span>
+            {syncLabel}
+          </span>
+        </div>
+      )}
     </header>
   );
 }

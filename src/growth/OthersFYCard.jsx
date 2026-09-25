@@ -2,8 +2,8 @@ import { formatCr } from './format.js';
 import { OTHERS_COLOR } from './fyTargets.js';
 
 // Compact FY-only card for "Others" = every marketplace beyond the 5 named channels.
-// There is no 6-month trend series for Others, so this card shows just the FY 26-27 target band
-// plus the list of contributing marketplaces. `fy` = { achievedCr, targetCr, pct }.
+// There is no 6-month trend series for Others, so this card shows just the FY target band
+// plus the list of contributing marketplaces. `fy` = { label, achievedCr, targetCr, pct }.
 export default function OthersFYCard({ fy, channels }) {
   if (!fy) return null;
   const c = OTHERS_COLOR;
@@ -22,7 +22,7 @@ export default function OthersFYCard({ fy, channels }) {
       <div className="rounded-md px-2 py-1 mt-1" style={{ background: `${c}22`, border: `1px solid ${c}55` }}>
         <div className="flex items-center gap-2">
           <span className="text-[9px] lg:text-[11px] font-black tracking-widest uppercase leading-none text-[#94a3b8]">
-            FY 26-27
+            {fy.label}
           </span>
           <span className="ml-auto text-[11px] lg:text-sm font-bold text-white leading-none">
             {formatCr(fy.achievedCr)} <span className="text-[#94a3b8] font-semibold">/ {formatCr(fy.targetCr)}</span>

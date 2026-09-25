@@ -10,6 +10,7 @@ export function useSalesData() {
   const [data, setData] = useState(null);
   const [syncing, setSyncing] = useState(true);
   const [error, setError] = useState(null);
+  const [fetchedAt, setFetchedAt] = useState(null);
   const failureCount = useRef(0);
   const lastGoodData = useRef(null);
 
@@ -20,6 +21,7 @@ export function useSalesData() {
       lastGoodData.current = result;
       setData(result);
       setError(null);
+      setFetchedAt(new Date());
       failureCount.current = 0;
     } catch (err) {
       console.error('[SalesData]', err.message);
@@ -39,5 +41,5 @@ export function useSalesData() {
     return () => clearInterval(id);
   }, [load]);
 
-  return { data, syncing, error, refresh: load };
+  return { data, syncing, error, fetchedAt, refresh: load };
 }

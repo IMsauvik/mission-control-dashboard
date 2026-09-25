@@ -9,6 +9,7 @@ import ChannelGrid from './components/ChannelGrid.jsx';
 import ChannelPieChart from './components/ChannelPieChart.jsx';
 import VideoCard from './components/VideoCard.jsx';
 import ChannelGrowthPage from './growth/ChannelGrowthPage.jsx';
+import FYOverview from './components/fy/FYOverview.jsx';
 import { useSalesData } from './hooks/useSalesData.js';
 import { useGrowthData } from './growth/useGrowthData.js';
 import { useFYData } from './growth/useFYData.js';
@@ -17,11 +18,19 @@ import { clearSheetsCache } from './data/sheetsClient.js';
 import { formatINR } from './data/salesData.js';
 
 export default function App() {
-  const { data, syncing, error, refresh: refreshSales } = useSalesData();
+  const { data, syncing, error, fetchedAt, refresh: refreshSales } = useSalesData();
   const { data: growthData, loading: growthLoading, error: growthError, refresh: refreshGrowth } = useGrowthData();
   const { data: fyData, refresh: refreshFY } = useFYData();
   const [view, setView] = useState('mission');
+  const [selectedKey, setSelectedKey] = useState(null);
   useKioskMode();
+
+  // When a new month's data arrives, drop any chip picked by hand so the unattended
+  // TV moves on to the new current month instead of staying on an old one.
+  const latestKey = data?.defaultKey;
+  useEffect(() => {
+    setSelectedKey(null);
+  }, [latestKey]);
 
   // Manual refresh (Imeco logo): drop the request cache so a just-edited sheet isn't
   // served stale, then refetch all three data sources immediately.
@@ -58,11 +67,15 @@ export default function App() {
     );
   }
 
+  const { monthlyData, scopes, defaultKey } = data;
+  const activeKey = selectedKey ?? defaultKey;
+  const scope = scopes.find((s) => s.key === activeKey) ?? scopes[scopes.length - 1];
+
   const {
     currentMTD, currentTarget, daysDone, totalDays, dailyTarget,
-    monthlyData, channelData, dailyData,
+    channelData, dailyData,
     currentMonthLabel, lastMonthSameDays,
-  } = data;
+  } = scope;
 
   const vsLastMoPct = lastMonthSameDays && lastMonthSameDays > 0
     ? Math.round(((currentMTD - lastMonthSameDays) / lastMonthSameDays) * 100)
@@ -108,6 +121,11 @@ export default function App() {
           growthRange={growthData?.rangeLabel}
           onRefresh={handleRefresh}
           syncing={syncing}
+          scopes={scopes}
+          activeKey={activeKey}
+          onSelectScope={setSelectedKey}
+          error={error}
+          fetchedAt={fetchedAt}
         />
       </div>
 
@@ -115,6 +133,9 @@ export default function App() {
       <div className="flex-1 min-h-0 flex flex-col gap-2">
         {view === 'growth' ? (
           <ChannelGrowthPage data={growthData} loading={growthLoading} error={growthError} fy={fyData} />
+        ) : scope.key === 'all' ? (
+          // ALL TIME — dedicated FY-to-date overview (own layout, not the month view)
+          <FYOverview scope={scope} videoSlot={<VideoCard />} />
         ) : (
           <>
             {/* KPI Row */}

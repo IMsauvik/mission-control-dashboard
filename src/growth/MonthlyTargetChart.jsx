@@ -2,24 +2,26 @@ import {
   ComposedChart, Bar, XAxis, YAxis, CartesianGrid,
   ResponsiveContainer, Legend, LabelList,
 } from 'recharts';
-import { FY_MONTHLY_TARGETS } from './fyTargets.js';
 import { UP_COLOR, DOWN_COLOR } from './format.js';
 
 const TARGET_COLOR = '#475569'; // slate bar for the plan
 const ACHIEVED_COLOR = UP_COLOR; // green bar for what landed
 
 // monthly = [{ month:'Apr', achievedCr, sheetTargetCr }] (live, completed months only)
-export default function MonthlyTargetChart({ monthly }) {
+// plan    = resolveFYPlan(...) — per-month target, sheet first, typed plan as fallback
+export default function MonthlyTargetChart({ monthly, plan }) {
+  if (!plan) return null;
   const achievedByMonth = Object.fromEntries((monthly || []).map((m) => [m.month, m.achievedCr]));
-  const data = FY_MONTHLY_TARGETS.map((t) => {
+  const data = plan.monthly.map((t) => {
     const achievedCr = t.month in achievedByMonth ? achievedByMonth[t.month] : null;
     return {
       month: t.month,
       targetCr: t.cr,
       achievedCr,
-      shortfallCr: achievedCr != null ? t.cr - achievedCr : null,
+      shortfallCr: achievedCr != null && t.cr != null ? t.cr - achievedCr : null,
     };
   });
+  const yMax = Math.max(1, ...data.map((d) => Math.max(d.targetCr ?? 0, d.achievedCr ?? 0)));
   const shortfallByMonth = Object.fromEntries(
     data.filter((d) => d.shortfallCr != null).map((d) => [d.month, d.shortfallCr])
   );
@@ -45,7 +47,7 @@ export default function MonthlyTargetChart({ monthly }) {
     <div className="card-glass rounded-xl p-4 h-full flex flex-col">
       <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
         <span className="text-[11px] font-bold tracking-widest uppercase text-[#94a3b8]">
-          Monthly Target vs Achieved — FY 26-27
+          Monthly Target vs Achieved — {plan.label}
         </span>
         <span className="text-[10px] font-semibold text-[#64748b]">₹ Cr · shortfall in red under month</span>
       </div>
@@ -62,7 +64,7 @@ export default function MonthlyTargetChart({ monthly }) {
               tickLine={false}
             />
             <YAxis
-              domain={[0, 8]}
+              domain={[0, Math.ceil(yMax)]}
               tickFormatter={(v) => `₹${v}Cr`}
               tick={{ fill: '#94a3b8', fontSize: 11 }}
               axisLine={false}

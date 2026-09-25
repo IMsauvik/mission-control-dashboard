@@ -1,17 +1,10 @@
-import { formatINR, getPctColor, getPctLabel } from '../data/salesData.js';
+import { formatINR, getPctColor, getPctLabel, getPctGradient as barGradient } from '../data/salesData.js';
 
 function badgeStyle(pct, color) {
   if (pct >= 100) return { background: 'rgba(34,197,94,0.18)', color, border: '1px solid rgba(34,197,94,0.35)' };
   if (pct >= 75) return { background: 'rgba(56,189,248,0.18)', color, border: '1px solid rgba(56,189,248,0.35)' };
   if (pct >= 50) return { background: 'rgba(251,146,60,0.25)', color, border: '1px solid rgba(251,146,60,0.55)', boxShadow: '0 0 8px rgba(251,146,60,0.3)' };
   return { background: 'rgba(244,63,94,0.25)', color, border: '1px solid rgba(244,63,94,0.55)', boxShadow: '0 0 8px rgba(244,63,94,0.35)' };
-}
-
-function barGradient(pct) {
-  if (pct >= 100) return 'linear-gradient(90deg, #16a34a, #22c55e, #4ade80)';
-  if (pct >= 75) return 'linear-gradient(90deg, #0284c7, #38bdf8)';
-  if (pct >= 50) return 'linear-gradient(90deg, #ea580c, #fb923c)';
-  return 'linear-gradient(90deg, #be123c, #f43f5e)';
 }
 
 function cumulative(arr) {
@@ -63,15 +56,19 @@ export default function ChannelCard({ channel, totalDays = 31 }) {
     lastDot = { x: px(thisCum.length - 1), y: py(thisCum[thisCum.length - 1]) };
   }
 
+  const tint = pacePct >= 100
+    ? 'rgba(34, 197, 94, 0.07)'
+    : pacePct < 50
+      ? 'rgba(244, 63, 94, 0.04)'
+      : 'rgba(10, 22, 40, 0.85)';
+
   return (
     <div
       className="rounded-xl p-2.5 flex flex-col h-full"
       style={{
-        background: pacePct >= 100
-          ? 'rgba(34, 197, 94, 0.07)'
-          : pacePct < 50
-            ? 'rgba(244, 63, 94, 0.04)'
-            : 'rgba(10, 22, 40, 0.85)',
+        // Tint layered over the solid page bg so the card stays opaque —
+        // the floating keep-awake video (z-index -10) must not show through
+        background: `linear-gradient(${tint}, ${tint}), #060c18`,
         border: `1px solid ${pacePct >= 100 ? 'rgba(34,197,94,0.25)'
           : pacePct < 50 ? 'rgba(244,63,94,0.2)'
             : 'rgba(26,45,69,0.8)'}`,

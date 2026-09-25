@@ -1,9 +1,9 @@
 import { formatINR, formatINRShort, formatPct, formatCr, dirColor, dirArrow } from './format.js';
 
 // One channel's detailed block: compact header (color dot + name + trend + overall verdict),
-// a highlighted FY 26-27 target band (if `fy` is supplied), then the 5 MoM chips.
+// a highlighted FY target band (if `fy` is supplied), then the 5 MoM chips.
 // `channel` = { key, color }, `analysis` = analyzeChannel(...) output,
-// `fy` = { achievedCr, targetCr, pct } | null.
+// `fy` = { label, achievedCr, targetCr, pct } | null.
 // Stretches to fill its slot (flex-1 from the parent) so the right column has no dead space.
 // Headline overall-growth color: a distinct Amazon-orange highlight so the big verdict
 // number pops out from the green/red month chips (downturns stay rose for clarity).
@@ -27,7 +27,7 @@ export default function ChannelGrowthBlock({ channel, analysis, fy }) {
         </span>
       </div>
 
-      {/* FY 26-27 target band — the highlight */}
+      {/* FY target band — the highlight */}
       {fy && (
         <div
           className="rounded-md px-2 py-1 mt-1"
@@ -35,7 +35,7 @@ export default function ChannelGrowthBlock({ channel, analysis, fy }) {
         >
           <div className="flex items-center gap-2">
             <span className="text-[9px] lg:text-[11px] font-black tracking-widest uppercase leading-none" style={{ color: c }}>
-              FY 26-27
+              {fy.label}
             </span>
             <span className="ml-auto text-[11px] lg:text-sm font-bold text-white leading-none">
               {formatCr(fy.achievedCr)} <span className="text-[#94a3b8] font-semibold">/ {formatCr(fy.targetCr)}</span>

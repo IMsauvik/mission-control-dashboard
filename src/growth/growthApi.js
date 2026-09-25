@@ -8,6 +8,7 @@
 // We read those two rows and ignore everything else (targets, daily rows, pace).
 
 import { listSheets as listSheetsShared, fetchSheetValues } from '../data/sheetsClient.js';
+import { resolveFYPlan, fyStartYearOf } from './fyTargets.js';
 
 const SPREADSHEET_ID = import.meta.env.VITE_SPREADSHEET_ID;
 
@@ -107,16 +108,13 @@ function parseMonthlyTotals(rows) {
   return out;
 }
 
-// --- FY 26-27 performance (target vs achieved) ---------------------------------
-// Reuses the same DSR tabs and channel matching. For each completed FY month we read:
+// --- FY performance (target vs achieved) -----------------------------------------
+// Reuses the same DSR tabs and channel matching. For each FY month tab we read:
 //   - the "Total" column of the "Total Sales" row  -> month achieved total
 //   - the "Total" column of the "Target" row       -> month target total (from the sheet)
-//   - per-channel "Total Sales"                     -> channel achieved (cumulated)
-// Returns figures in ₹ Crore. "Others" = month total minus the 5 mapped channels.
-
-// FY 26-27 spans Apr 2026 (sortKey 2026*12+3) … Mar 2027 (2026*12+14) inclusive.
-const FY_START_KEY = 2026 * 12 + 3;
-const FY_END_KEY = 2026 * 12 + 14;
+//   - per-channel "Total Sales" / "Target"          -> channel achieved / target
+// Returns figures in ₹ Crore. "Others" = everything beyond the 5 mapped channels.
+// The FY itself follows the latest completed month, so it rolls over on its own.
 const TO_CR = 1e7;
 
 function parseMonthFY(rows) {
@@ -134,7 +132,11 @@ function parseMonthFY(rows) {
   if (totalIdx === -1) return null;
 
   const channelAchieved = {};
-  for (const ch of CHANNELS) channelAchieved[ch.key] = 0;
+  const channelTarget = { Others: 0 };
+  for (const ch of CHANNELS) {
+    channelAchieved[ch.key] = 0;
+    channelTarget[ch.key] = 0;
+  }
   let othersTotal = 0;
   const otherNames = new Set();
   for (let i = 1; i < totalIdx; i++) {
@@ -142,12 +144,14 @@ function parseMonthFY(rows) {
     if (!name) continue;
     const ch = CHANNELS.find((c) => c.match(name));
     const val = parseNum(totalRow[i]);
+    channelTarget[ch ? ch.key : 'Others'] += parseNum(targetRow[i]);
     if (ch) {
       channelAchieved[ch.key] += val;
     } else {
       // Everything beyond the 5 named channels rolls up into "Others".
       othersTotal += val;
-      otherNames.add(name);
+      // D2C Website / D2C Website & Bulk are one channel under two column names
+      otherNames.add(/^d2c website/i.test(name) ? 'D2C Website & Bulk' : name);
     }
   }
 
@@ -155,6 +159,7 @@ function parseMonthFY(rows) {
     achievedTotal: parseNum(totalRow[totalIdx]),
     targetTotal: parseNum(targetRow[totalIdx]),
     channelAchieved,
+    channelTarget,
     othersTotal,
     otherNames: [...otherNames],
   };
@@ -162,28 +167,48 @@ function parseMonthFY(rows) {
 
 export async function fetchFYPerformance() {
   const names = await listSheets();
-  const cutoff = currentMonthKey(); // exclude the in-progress month and the future
+  const cutoff = currentMonthKey(); // achieved figures: completed months only
 
-  const fyMonths = names
+  const dsrTabs = names
     .map((name) => ({ name, meta: parseSheetMeta(name) }))
     .filter(({ name, meta }) =>
       meta !== null &&
       name.toLowerCase().startsWith('dsr') &&
-      meta.sortKey >= FY_START_KEY &&
-      meta.sortKey <= FY_END_KEY &&
-      meta.sortKey < cutoff && // completed months only
       !(name.toLowerCase().includes('oct') && name.toLowerCase().includes('nov')) &&
       !name.toLowerCase().includes('daily report')
     )
     .sort((a, b) => a.meta.sortKey - b.meta.sortKey);
 
-  const parsed = await Promise.all(
-    fyMonths.map(async ({ name, meta }) => {
+  // The FY is the one the latest completed month belongs to (Apr → Mar).
+  const completedTabs = dsrTabs.filter(({ meta }) => meta.sortKey < cutoff);
+  if (completedTabs.length === 0) throw new Error('No completed DSR month sheets found');
+  const anchor = completedTabs[completedTabs.length - 1].meta;
+  const fyStartYear = fyStartYearOf(anchor.month, anchor.year);
+  const fyStartKey = fyStartYear * 12 + 3;
+  const fyEndKey = fyStartKey + 11;
+
+  // Every tab in this FY — including the running month — for its sheet Target row.
+  const fyTabs = dsrTabs.filter(({ meta }) => meta.sortKey >= fyStartKey && meta.sortKey <= fyEndKey);
+  const parsedAll = await Promise.all(
+    fyTabs.map(async ({ name, meta }) => {
       const rows = await fetchSheetRows(name);
       return { meta, fy: parseMonthFY(rows) };
     })
   );
-  const valid = parsed.filter((p) => p.fy !== null);
+  const parsedTabs = parsedAll.filter((p) => p.fy !== null);
+  const valid = parsedTabs.filter((p) => p.meta.sortKey < cutoff);
+
+  // Sheet target wins for every month that has a tab; typed plan fills the rest.
+  const plan = resolveFYPlan(
+    fyStartYear,
+    parsedTabs.map((p) => ({
+      month: MONTH_LABELS[p.meta.month],
+      targetCr: p.fy.targetTotal / TO_CR,
+      channelTargetCr: Object.fromEntries(
+        Object.entries(p.fy.channelTarget).map(([k, v]) => [k, v / TO_CR])
+      ),
+    }))
+  );
 
   const months = valid.map((p) => monthLabel(p.meta));
   const monthly = valid.map((p) => ({
@@ -214,6 +239,7 @@ export async function fetchFYPerformance() {
     channelAchievedCr,
     othersChannels: [...otherNames],
     totalAchievedCr: grandTotal / TO_CR,
+    plan,
   };
 }
 

@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { CHANNELS } from './growthApi.js';
 import { analyzeChannel } from './analysis.js';
-import { FY_ANNUAL_TARGET_CR, FY_MONTHLY_TARGETS, FY_CHANNEL_TARGETS } from './fyTargets.js';
 import { formatCr, formatPct, UP_COLOR, DOWN_COLOR } from './format.js';
 import AllChannelsChart from './AllChannelsChart.jsx';
 import MonthlyTargetChart from './MonthlyTargetChart.jsx';
@@ -26,7 +25,7 @@ function KpiTile({ label, value, valueColor = '#f1f5f9', sub }) {
 // Body of the Channel Growth page. The shared mission-control <Header> is rendered by App.
 // One screen, no sub-tabs: a top FY-target KPI strip, the 6-month trend line chart with the
 // FY monthly target-vs-achieved chart stacked beneath it, and the per-channel cards (each with
-// an FY 26-27 target progress bar). Both trend data and FY data are lifted from App and passed
+// an FY target progress bar). Both trend data and FY data are lifted from App and passed
 // in as props, so no API call is tied to this page mounting (it auto-rotates every 2 min).
 export default function ChannelGrowthPage({ data, loading, error, fy }) {
   const view = useMemo(() => {
@@ -45,30 +44,35 @@ export default function ChannelGrowthPage({ data, loading, error, fy }) {
     return { chartData, blocks };
   }, [data]);
 
-  // FY target progress per channel + annual KPI roll-up (live achieved, hardcoded targets).
+  // FY target progress per channel + annual KPI roll-up. Achieved is live; targets come
+  // from fy.plan — sheet Target rows first, typed plan only for months without a tab.
   const fyView = useMemo(() => {
-    if (!fy) return null;
+    if (!fy?.plan) return null;
+    const { plan } = fy;
     const byChannel = {};
     for (const ch of CHANNELS) {
-      const targetCr = FY_CHANNEL_TARGETS[ch.key] ?? 0;
+      const targetCr = plan.channelCr[ch.key] ?? 0;
       const achievedCr = fy.channelAchievedCr?.[ch.key] ?? 0;
       byChannel[ch.key] = {
+        label: plan.label,
         achievedCr,
         targetCr,
         pct: targetCr > 0 ? (achievedCr / targetCr) * 100 : 0,
       };
     }
-    const othersTarget = FY_CHANNEL_TARGETS.Others ?? 0;
+    const othersTarget = plan.channelCr.Others ?? 0;
     const othersAchieved = fy.channelAchievedCr?.Others ?? 0;
     const others = {
+      label: plan.label,
       achievedCr: othersAchieved,
       targetCr: othersTarget,
       pct: othersTarget > 0 ? (othersAchieved / othersTarget) * 100 : 0,
     };
-    const targetByMonth = Object.fromEntries(FY_MONTHLY_TARGETS.map((m) => [m.month, m.cr]));
+    const targetByMonth = Object.fromEntries(plan.monthly.map((m) => [m.month, m.cr ?? 0]));
     const ytdTarget = (fy.monthly || []).reduce((s, m) => s + (targetByMonth[m.month] ?? 0), 0);
     const achieved = fy.totalAchievedCr || 0;
     return {
+      plan,
       byChannel,
       others,
       othersChannels: fy.othersChannels || [],
@@ -108,10 +112,10 @@ export default function ChannelGrowthPage({ data, loading, error, fy }) {
       className="relative flex-1 flex flex-col gap-2 min-h-0"
       style={{ animation: 'fadeInUp 0.4s ease-out 120ms both' }}
     >
-      {/* FY 26-27 annual KPI strip */}
+      {/* FY annual KPI strip */}
       {fyView && (
         <div className="flex-none grid grid-cols-2 lg:grid-cols-4 gap-2">
-          <KpiTile label="FY 26-27 Target" value={formatCr(FY_ANNUAL_TARGET_CR)} sub="Apr '26 — Mar '27" />
+          <KpiTile label={`${fyView.plan.label} Target`} value={formatCr(fyView.plan.annualCr)} sub={fyView.plan.rangeLabel} />
           <KpiTile label="Achieved YTD" value={formatCr(fyView.achieved)} valueColor={UP_COLOR} sub={`of ${formatCr(fyView.ytdTarget)} due`} />
           <KpiTile label="Shortfall YTD" value={formatCr(fyView.shortfall)} valueColor={fyView.shortfall > 0 ? DOWN_COLOR : UP_COLOR} sub="target due − achieved" />
           <KpiTile label="Attainment" value={formatPct(fyView.attainPct)} valueColor={attainColor} sub="vs YTD target" />
@@ -125,7 +129,7 @@ export default function ChannelGrowthPage({ data, loading, error, fy }) {
             <AllChannelsChart data={view.chartData} />
           </div>
           <div className="h-[220px] lg:h-auto lg:flex-[2] lg:min-h-0">
-            <MonthlyTargetChart monthly={fy?.monthly} />
+            <MonthlyTargetChart monthly={fy?.monthly} plan={fy?.plan} />
           </div>
         </div>
         <div className="flex flex-col gap-1.5 lg:min-h-0">

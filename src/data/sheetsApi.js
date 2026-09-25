@@ -1,4 +1,6 @@
 import { listSheets as listSheetsShared, fetchSheetValues } from './sheetsClient.js';
+import { formatCompactINR } from './salesData.js';
+import { resolveFYPlan } from '../growth/fyTargets.js';
 
 const SPREADSHEET_ID = import.meta.env.VITE_SPREADSHEET_ID;
 const AD_SPEND_SHEET_ID = import.meta.env.VITE_AD_SPEND_SPREADSHEET_ID;
@@ -235,6 +237,22 @@ function parseSheet(rows, meta) {
     }
   }
 
+  // Merge D2C Website + D2C Website & Bulk into one card — same channel, the column
+  // name differs between months. Rename even when only one exists so month-over-month
+  // and ALL TIME aggregation match by name.
+  const d2cChannels = channels.filter(c => c.name.toLowerCase().startsWith('d2c website'));
+  if (d2cChannels.length > 0) {
+    const [d2c, ...rest] = d2cChannels;
+    d2c.name = 'D2C Website & Bulk';
+    for (const other of rest) {
+      d2c.target += other.target;
+      d2c.actual += other.actual;
+      d2c.daily = d2c.daily.map((v, i) => v + (other.daily[i] || 0));
+      channels.splice(channels.indexOf(other), 1);
+    }
+    d2c.pct = d2c.target > 0 ? Math.round((d2c.actual / d2c.target) * 100) : 0;
+  }
+
   // Merge RK World + Clicktech + Amazon SC → Amazon (SC & VC)
   function isAmazonChannel(name) {
     const n = name.toLowerCase();
@@ -285,6 +303,50 @@ function parseSheet(rows, meta) {
   };
 }
 
+// vs-last-month comparison for one parsed month, looked up against the full
+// (unfiltered) month list so e.g. April can still compare against the prior
+// financial year's March.
+function computeVsLast(monthEntry, allMonths) {
+  const idx = allMonths.indexOf(monthEntry);
+  const prev = idx > 0 ? allMonths[idx - 1] : null;
+  const N = monthEntry.dataRowsDone;
+  const lastByName = prev ? new Map(prev.channels.map(c => [c.name, c])) : null;
+
+  const channels = monthEntry.channels.map((ch) => {
+    const prevCh = lastByName?.get(ch.name);
+    if (!prevCh || !prevCh.daily) {
+      return { ...ch, lastSameDays: null, prevDailySlice: null, vsLastPct: null };
+    }
+    const slice = prevCh.daily.slice(0, N);
+    const sum = slice.reduce((s, v) => s + v, 0);
+    return {
+      ...ch,
+      lastSameDays: sum,
+      prevDailySlice: slice,
+      vsLastPct: sum > 0
+        ? Math.round(((ch.actual - sum) / sum) * 100)
+        : (ch.actual > 0 ? null : 0),
+    };
+  });
+
+  const lastMonthSameDays = prev
+    ? prev.dailyData.slice(0, N).reduce((s, d) => s + (d.revenue || 0), 0)
+    : null;
+  const currentMRR = prev ? prev.monthActual : monthEntry.monthActual;
+
+  return { channels, lastMonthSameDays, currentMRR };
+}
+
+// Financial year runs Apr → Mar. Anchored on the latest DSR sheet found (rather
+// than the system clock) so the dashboard stays correct even if a month's sheet
+// hasn't been added yet.
+function getFYBounds(latestMeta) {
+  const startYear = latestMeta.month >= 3 ? latestMeta.year : latestMeta.year - 1;
+  const startKey = startYear * 12 + 3; // April
+  const endKey = startKey + 11;        // March next year
+  return { startYear, startKey, endKey };
+}
+
 export async function fetchAllSalesData() {
   const allNames = await listSheets();
 
@@ -309,61 +371,154 @@ export async function fetchAllSalesData() {
   const valid = parsed.filter(Boolean);
   if (valid.length === 0) throw new Error('Could not parse any DSR sheets');
 
-  const current = valid[valid.length - 1];
-  const lastComplete = valid.length >= 2 ? valid[valid.length - 2] : null;
+  // The "current" month is the latest tab that already has daily sales. A new month's
+  // tab is usually created before any rows are filled in; until its first day of data
+  // arrives the dashboard stays on the previous month (and, on 1 April, on the previous
+  // FY) instead of flipping to an empty month. Picked up on the next hourly refresh.
+  const withData = valid.filter(m => m.dataRowsDone > 0);
+  const anchorPool = withData.length > 0 ? withData : valid;
+  const anchor = anchorPool[anchorPool.length - 1];
 
-  const N = current.dataRowsDone;
-  const lastByName = lastComplete
-    ? new Map(lastComplete.channels.map(c => [c.name, c]))
-    : null;
-  for (const ch of current.channels) {
-    const prev = lastByName?.get(ch.name);
-    if (!prev || !prev.daily) {
-      ch.lastSameDays = null;
-      ch.prevDailySlice = null;
-      ch.vsLastPct = null;
-      continue;
-    }
-    const slice = prev.daily.slice(0, N);
-    const sum = slice.reduce((s, v) => s + v, 0);
-    ch.lastSameDays = sum;
-    ch.prevDailySlice = slice;
-    ch.vsLastPct = sum > 0
-      ? Math.round(((ch.actual - sum) / sum) * 100)
-      : (ch.actual > 0 ? null : 0);
-  }
-
-  const lastMonthSameDays = lastComplete
-    ? lastComplete.dailyData.slice(0, N).reduce((s, d) => s + (d.revenue || 0), 0)
-    : null;
+  // Restrict to the current financial year (Apr–Mar) — older sheets from a
+  // prior FY are only used above for month-over-month "vs last" comparisons.
+  const { startYear: fyStartYear, startKey: fyStartKey, endKey: fyEndKey } =
+    getFYBounds(anchor.meta);
+  const fyValid = valid.filter(
+    m => m.meta.sortKey >= fyStartKey && m.meta.sortKey <= Math.min(fyEndKey, anchor.meta.sortKey)
+  );
+  if (fyValid.length === 0) throw new Error('No DSR sheets found for the current financial year');
 
   // Ads data hidden for now — the badges it fed are commented out in
   // src/components/ChannelCard.jsx. Skipping the fetch avoids the Sheets
   // calls to the ad-spend spreadsheets on every refresh.
   // const adSpendByName = await fetchAdSpendForMonth(current.meta);
-  // for (const ch of current.channels) {
-  //   const entry = adSpendByName.get(ch.name);
-  //   ch.adSpend = entry?.spend ?? null;
-  //   ch.adRoas = entry?.roas ?? null;
-  //   ch.adTracked = AD_TRACKED_CHANNELS.has(ch.name);
-  // }
+
+  const monthScopes = fyValid.map((m) => {
+    const { channels, lastMonthSameDays, currentMRR } = computeVsLast(m, valid);
+    return {
+      key: String(m.meta.sortKey),
+      chipLabel: MONTH_LABELS[m.meta.month].toUpperCase(),
+      hint: formatCompactINR(m.monthActual),
+      currentMTD: m.monthActual,
+      currentTarget: m.monthTarget,
+      daysDone: m.dataRowsDone,
+      totalDays: m.daysInMonth,
+      dailyTarget: m.dailyTarget,
+      channelData: channels,
+      dailyData: m.dailyData,
+      currentMonthLabel: m.label,
+      lastMonthSameDays,
+      currentMRR,
+    };
+  });
+
+  // "ALL TIME" = financial-year-to-date aggregate across every FY month fetched so far.
+  const allTimeTarget = fyValid.reduce((s, m) => s + m.monthTarget, 0);
+  const allTimeActual = fyValid.reduce((s, m) => s + m.monthActual, 0);
+  const allTimeDaysDone = fyValid.reduce((s, m) => s + m.dataRowsDone, 0);
+  const allTimeTotalDays = fyValid.reduce((s, m) => s + m.daysInMonth, 0);
+  const allTimeDailyTarget = allTimeTotalDays > 0
+    ? Math.round(allTimeTarget / allTimeTotalDays)
+    : 0;
+  const allTimeDayFrac = allTimeTotalDays > 0 ? allTimeDaysDone / allTimeTotalDays : 0;
+
+  const channelTotalsByName = new Map();
+  for (const m of fyValid) {
+    for (const ch of m.channels) {
+      const acc = channelTotalsByName.get(ch.name) || { name: ch.name, target: 0, actual: 0, daily: [], monthly: [] };
+      acc.target += ch.target;
+      acc.actual += ch.actual;
+      acc.daily = acc.daily.concat(ch.daily);
+      // Per-month breakdown for the ALL TIME channel × month matrix
+      acc.monthly.push({
+        key: String(m.meta.sortKey),
+        label: MONTH_LABELS[m.meta.month],
+        actual: ch.actual,
+        target: ch.target,
+      });
+      channelTotalsByName.set(ch.name, acc);
+    }
+  }
+  const allTimeChannels = Array.from(channelTotalsByName.values()).map((ch) => {
+    const pct = ch.target > 0 ? Math.round((ch.actual / ch.target) * 100) : 0;
+    const expected = Math.round(ch.target * allTimeDayFrac);
+    return {
+      ...ch,
+      pct,
+      expected,
+      pacePct: expected > 0 ? Math.round((ch.actual / expected) * 100) : (ch.actual > 0 ? 999 : 0),
+      delta: ch.actual - expected,
+      lastSameDays: null,
+      prevDailySlice: null,
+      vsLastPct: null,
+    };
+  });
+
+  const allTimeDailyData = [];
+  let dayCounter = 0;
+  for (const m of fyValid) {
+    for (const d of m.dailyData) {
+      dayCounter += 1;
+      allTimeDailyData.push({
+        ...d,
+        day: String(dayCounter),
+        target: allTimeDailyTarget,
+        month: MONTH_LABELS[m.meta.month],
+        monthDay: Number(d.day),
+        monthTarget: m.dailyTarget,
+      });
+    }
+  }
+
+  const fyLabel = `FY ${String(fyStartYear).slice(-2)}-${String(fyStartYear + 1).slice(-2)}`;
+
+  const allTimeScope = {
+    key: 'all',
+    chipLabel: 'ALL TIME',
+    hint: formatCompactINR(allTimeActual),
+    currentMTD: allTimeActual,
+    currentTarget: allTimeTarget,
+    daysDone: allTimeDaysDone,
+    totalDays: allTimeTotalDays,
+    dailyTarget: allTimeDailyTarget,
+    channelData: allTimeChannels,
+    dailyData: allTimeDailyData,
+    currentMonthLabel: fyLabel,
+    lastMonthSameDays: null,
+    currentMRR: allTimeActual,
+    // Full-year targets: each tab's sheet Target row wins; typed plan only for months
+    // without a tab yet. Includes tabs created ahead of their first day of data.
+    fyPlan: resolveFYPlan(
+      fyStartYear,
+      valid
+        .filter(m => m.meta.sortKey >= fyStartKey && m.meta.sortKey <= fyEndKey)
+        .map(m => ({ month: MONTH_LABELS[m.meta.month], targetCr: m.monthTarget / 1e7 }))
+    ),
+    // Month-level rollup for the ALL TIME overview
+    months: fyValid.map((m, i) => ({
+      key: String(m.meta.sortKey),
+      label: MONTH_LABELS[m.meta.month],
+      year: m.meta.year,
+      actual: m.monthActual,
+      target: m.monthTarget,
+      daysDone: m.dataRowsDone,
+      daysInMonth: m.daysInMonth,
+      dailyTarget: m.dailyTarget,
+      partial: i === fyValid.length - 1 && m.dataRowsDone < m.daysInMonth,
+    })),
+  };
+
+  const scopes = [allTimeScope, ...monthScopes];
+  const defaultKey = monthScopes[monthScopes.length - 1]?.key ?? 'all';
 
   return {
-    monthlyData: valid.map((m, i) => ({
+    monthlyData: fyValid.map((m, i) => ({
       month: m.label,
       revenue: m.monthActual,
       target: m.monthTarget,
-      partial: i === valid.length - 1 && m.dataRowsDone < m.daysInMonth,
+      partial: i === fyValid.length - 1 && m.dataRowsDone < m.daysInMonth,
     })),
-    channelData: current.channels,
-    dailyData: current.dailyData,
-    currentMTD: current.monthActual,
-    currentTarget: current.monthTarget,
-    daysDone: current.dataRowsDone,
-    totalDays: current.daysInMonth,
-    dailyTarget: current.dailyTarget,
-    currentMRR: lastComplete ? lastComplete.monthActual : current.monthActual,
-    lastMonthSameDays,
-    currentMonthLabel: current.label,
+    scopes,
+    defaultKey,
   };
 }
